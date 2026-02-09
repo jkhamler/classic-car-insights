@@ -7,6 +7,8 @@ class AuctionSale(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     car_name = Column(String, nullable=False)
+    make = Column(String(100), nullable=True, index=True)
+    model = Column(String(200), nullable=True)
     sale_price = Column(Float, nullable=True)
     sale_date = Column(Date, nullable=True)
     vin = Column(String, nullable=True)
