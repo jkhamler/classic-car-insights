@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# IDEs
+.idea/
+
+# Dependencies
+node_modules/
+
+# Vite build output
+classic-car-ui/dist/
