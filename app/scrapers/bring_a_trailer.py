@@ -1,20 +1,28 @@
 """Bring a Trailer scraper — benchmark pricing from completed auctions."""
 import logging
 import re
-from urllib.parse import urlencode
 
 import httpx
 from bs4 import BeautifulSoup
 
 from app.scrapers.base import BaseScraper, RawListing
 from app.scrapers.registry import register_scraper
-from app.scrapers.utils import parse_price, parse_year, to_gbp, clean_text, parse_date
+from app.scrapers.utils import parse_price, parse_year, to_gbp, clean_text
 
 logger = logging.getLogger(__name__)
 
 TARGET_MAKES = [
-    "porsche", "bmw", "nissan", "toyota", "honda", "mazda",
-    "mitsubishi", "subaru", "mercedes", "lotus", "alfa+romeo",
+    "porsche+911", "porsche+944", "porsche+boxster", "porsche+cayman",
+    "bmw+m3", "bmw+m5",
+    "nissan+skyline", "nissan+350z",
+    "toyota+supra", "toyota+mr2",
+    "honda+nsx", "honda+s2000",
+    "mazda+rx-7", "mazda+mx-5",
+    "mitsubishi+lancer+evolution",
+    "subaru+impreza+sti",
+    "lotus+elise", "lotus+exige",
+    "mercedes+c63+amg", "mercedes+sl",
+    "alfa+romeo+gtv",
 ]
 
 
@@ -26,54 +34,66 @@ class BringATrailerScraper(BaseScraper):
     async def scrape_listings(self, client: httpx.AsyncClient) -> list[RawListing]:
         all_listings: list[RawListing] = []
 
-        for make in TARGET_MAKES:
+        for search_term in TARGET_MAKES:
             try:
-                url = f"https://bringatrailer.com/search/?s={make}&sort=date&type=auctions&sale_status=sold"
+                url = f"https://bringatrailer.com/search/?s={search_term}&sort=date&type=auctions&sale_status=sold"
                 html = await self.fetch_with_rate_limit(client, url)
                 listings = self._parse_search_results(html)
                 all_listings.extend(listings)
-                logger.info(f"[BaT] {make}: found {len(listings)} results")
+                logger.info(f"[BaT] {search_term}: found {len(listings)} results")
             except Exception as e:
-                logger.error(f"[BaT] Failed to scrape {make}: {e}")
+                logger.error(f"[BaT] Failed to scrape {search_term}: {e}")
 
         return all_listings
 
     def _parse_search_results(self, html: str) -> list[RawListing]:
         soup = BeautifulSoup(html, "lxml")
         listings = []
-
-        items = soup.select(".search-results-entry, .listing-card, [class*='auction-item']")
-        if not items:
-            items = soup.select("a[href*='/listing/']")
-
         seen_urls = set()
-        for item in items:
+
+        # BaT listing links follow /listing/ pattern
+        all_links = soup.find_all("a", href=re.compile(r"/listing/"))
+
+        for link in all_links:
             try:
-                link = item.get("href") if item.name == "a" else None
-                if not link:
-                    link_el = item.select_one("a[href*='/listing/']")
-                    link = link_el["href"] if link_el else None
-                if not link or link in seen_urls:
+                href = link.get("href", "")
+                if not href or href in seen_urls:
                     continue
-                seen_urls.add(link)
+                if not href.startswith("http"):
+                    href = f"https://bringatrailer.com{href}"
 
-                title_el = item.select_one("h3, .listing-card-title, .title, [class*='title']")
-                title = clean_text(title_el.get_text()) if title_el else clean_text(item.get_text())
-                if not title or len(title) < 5:
+                seen_urls.add(href)
+                slug = href.rstrip("/").split("/")[-1]
+
+                # Get all text from the link and its parent context
+                text = clean_text(link.get_text(separator=" | "))
+                if not text or len(text) < 10:
                     continue
 
-                price_el = item.select_one("[class*='price'], .listing-card-price, .bid-value")
-                price_text = price_el.get_text() if price_el else None
-                sale_price = parse_price(price_text)
+                # Also grab text from sibling/parent elements for price context
+                parent = link.parent
+                context_text = clean_text(parent.get_text(separator=" | ")) if parent else text
 
-                slug = link.rstrip("/").split("/")[-1]
+                title = self._extract_title(text)
+                if not title or len(title) < 8:
+                    continue
+
+                # Look for price in the context around the link
+                sale_price = self._find_price(context_text)
+                if not sale_price:
+                    # Try grandparent
+                    grandparent = parent.parent if parent else None
+                    if grandparent:
+                        gp_text = clean_text(grandparent.get_text(separator=" | "))
+                        sale_price = self._find_price(gp_text)
+
                 year = parse_year(title)
                 make, model = self._extract_make_model(title)
 
                 listings.append(RawListing(
                     external_id=slug,
                     title=title[:500],
-                    listing_url=link if link.startswith("http") else f"https://bringatrailer.com{link}",
+                    listing_url=href,
                     listing_type="auction",
                     make=make,
                     model=model,
@@ -83,10 +103,29 @@ class BringATrailerScraper(BaseScraper):
                     price_gbp=to_gbp(sale_price, "USD"),
                 ))
             except Exception as e:
-                logger.debug(f"[BaT] Error parsing item: {e}")
+                logger.debug(f"[BaT] Error parsing link: {e}")
                 continue
 
         return listings
+
+    def _extract_title(self, text: str) -> str | None:
+        parts = text.split("|")
+        for part in parts:
+            part = part.strip()
+            if len(part) > 10 and not part.startswith("$"):
+                year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", part)
+                if year_match:
+                    return part
+        return parts[0].strip() if parts else None
+
+    def _find_price(self, text: str) -> float | None:
+        # BaT shows prices as "$45,000" or "Sold for $45,000"
+        matches = re.findall(r"\$\s*([\d,]+)", text)
+        for m in matches:
+            val = parse_price(f"${m}")
+            if val and val >= 1000:  # Filter out noise
+                return val
+        return None
 
     def _extract_make_model(self, title: str) -> tuple[str | None, str | None]:
         title_lower = title.lower()
