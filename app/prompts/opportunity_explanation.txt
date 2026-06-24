@@ -1,0 +1,31 @@
+You are a classic car market analyst. Analyze this listing and explain why it may be undervalued.
+
+## Listing
+- **Title**: {title}
+- **Make/Model**: {make} {model} ({year})
+- **Asking Price**: £{asking_price:,.0f}
+- **Mileage**: {mileage}
+- **Location**: {location}
+- **Source**: {source_name}
+- **Transmission**: {transmission}
+
+## Market Benchmark
+- **Average sale price**: £{benchmark_avg:,.0f}
+- **Median sale price**: £{benchmark_median:,.0f}
+- **Price range**: £{benchmark_min:,.0f} – £{benchmark_max:,.0f}
+- **Sample size**: {sample_count} recent sales
+- **Price trend**: {price_trend}% month-on-month
+
+## Undervaluation Score: {score}/100
+### Score Breakdown
+- Price vs benchmark: {score_price}/100
+- Mileage: {score_mileage}/100
+- Market trend: {score_trend}/100
+- Scarcity: {score_scarcity}/100
+
+Write a concise 2-3 paragraph analysis covering:
+1. Why this listing appears undervalued relative to market benchmarks
+2. Key risk factors or things to verify before purchasing
+3. Investment outlook for this model
+
+Use specific numbers. Be direct and opinionated. Do not hedge excessively.

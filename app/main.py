@@ -5,10 +5,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.api import auction_sales
-from app.api.health import router as health_router
 
-app = FastAPI(title="Classic Car Insights")
+from app.api import dashboard, listings, vehicles, trends, alerts, reports, scraper_admin
+from app.api.health import router as health_router
+from app.jobs.scheduler import lifespan
+
+# Import scrapers to trigger registration
+import app.scrapers.bring_a_trailer  # noqa: F401
+import app.scrapers.car_and_classic  # noqa: F401
+import app.scrapers.pistonheads  # noqa: F401
+
+app = FastAPI(title="Classic Car Insights", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,23 +28,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health check endpoint
 app.include_router(health_router, prefix="/health", tags=["health"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(listings.router, prefix="/api/listings", tags=["listings"])
+app.include_router(vehicles.router, prefix="/api/vehicles", tags=["vehicles"])
+app.include_router(trends.router, prefix="/api/trends", tags=["trends"])
+app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
+app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
+app.include_router(scraper_admin.router, prefix="/api/admin", tags=["admin"])
 
-# API routes — mounted at both /api/auction-sales (for the frontend proxy
-# convention) and /auction-sales (for direct access / backwards compat)
-app.include_router(
-    auction_sales.router,
-    prefix="/api/auction-sales",
-    tags=["auction-sales"],
-)
-app.include_router(
-    auction_sales.router,
-    prefix="/auction-sales",
-    tags=["auction-sales"],
-)
-
-# Serve the React frontend build if it exists (production)
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 if STATIC_DIR.is_dir():
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
@@ -51,4 +50,4 @@ if STATIC_DIR.is_dir():
 else:
     @app.get("/")
     def root():
-        return {"status": "ok"}
+        return {"status": "ok", "app": "Classic Car Insights"}
