@@ -10,6 +10,7 @@ from app.services.benchmark_calculator import recalculate_benchmarks
 from app.services.vehicle_matcher import match_vehicle
 from app.db.models.listing import Listing
 from app.services.seed import seed_all
+from app.services.manual_benchmarks import seed_manual_benchmarks
 
 router = APIRouter()
 
@@ -18,6 +19,12 @@ router = APIRouter()
 def seed_database(db: Session = Depends(get_db)):
     result = seed_all(db)
     return result
+
+
+@router.post("/seed-benchmarks")
+def seed_benchmark_data(db: Session = Depends(get_db)):
+    created = seed_manual_benchmarks(db)
+    return {"benchmarks_created": created}
 
 
 @router.post("/scrape/{source_name}")
