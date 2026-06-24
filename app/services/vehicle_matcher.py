@@ -86,6 +86,7 @@ def match_vehicle(db: Session, make: str | None, model: str | None, title: str |
         search_parts.append(_normalize(model))
     search_key = " ".join(search_parts)
 
+    # Try alias dictionary first
     for alias_key, (v_make, v_model, v_gen) in ALIASES.items():
         if alias_key in search_key or (title and alias_key in _normalize(title)):
             vehicle = (
@@ -96,14 +97,34 @@ def match_vehicle(db: Session, make: str | None, model: str | None, title: str |
             if vehicle:
                 return vehicle
 
-    if make:
-        q = db.query(Vehicle).filter(Vehicle.make.ilike(f"%{make.strip()}%"))
-        if model:
-            q = q.filter(Vehicle.model.ilike(f"%{model.strip()}%"))
-        if year:
-            q = q.filter(Vehicle.year_start <= year, (Vehicle.year_end >= year) | (Vehicle.year_end.is_(None)))
-        vehicle = q.first()
-        if vehicle:
-            return vehicle
+    if not make:
+        return None
 
-    return None
+    # Try exact match with year range
+    candidates = (
+        db.query(Vehicle)
+        .filter(Vehicle.make.ilike(f"%{make.strip()}%"))
+    )
+    if model:
+        candidates = candidates.filter(Vehicle.model.ilike(f"%{model.strip()}%"))
+    candidates = candidates.all()
+
+    if not candidates:
+        return None
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    # Multiple candidates — use year to pick the best one
+    if year:
+        for v in candidates:
+            start = v.year_start or 0
+            end = v.year_end or 9999
+            if start <= year <= end:
+                return v
+        # No exact year match — return closest by year
+        candidates.sort(key=lambda v: min(abs((v.year_start or 0) - year), abs((v.year_end or 9999) - year)))
+        return candidates[0]
+
+    # No year — return first candidate
+    return candidates[0]
