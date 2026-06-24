@@ -69,7 +69,7 @@ def generate_opportunity_explanation(db: Session, listing: Listing) -> str | Non
     try:
         client = _get_client()
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6",
             max_tokens=500,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -82,7 +82,7 @@ def generate_opportunity_explanation(db: Session, listing: Listing) -> str | Non
             content=content,
             listing_id=listing.id,
             vehicle_id=listing.vehicle_id,
-            metadata_json={"model": "claude-sonnet-4-20250514", "tokens": response.usage.output_tokens},
+            metadata_json={"model": "claude-sonnet-4-6", "tokens": response.usage.output_tokens},
         )
         return content
     except Exception as e:
@@ -131,7 +131,7 @@ def generate_investment_thesis(db: Session, vehicle: Vehicle) -> str | None:
     try:
         client = _get_client()
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6",
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -143,7 +143,7 @@ def generate_investment_thesis(db: Session, vehicle: Vehicle) -> str | None:
             title=f"Investment Thesis: {vehicle.make} {vehicle.model} ({vehicle.generation})",
             content=content,
             vehicle_id=vehicle.id,
-            metadata_json={"model": "claude-sonnet-4-20250514", "tokens": response.usage.output_tokens},
+            metadata_json={"model": "claude-sonnet-4-6", "tokens": response.usage.output_tokens},
         )
         return content
     except Exception as e:
@@ -205,7 +205,7 @@ def generate_weekly_digest(db: Session) -> str | None:
     try:
         client = _get_client()
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-6",
             max_tokens=2000,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -216,7 +216,7 @@ def generate_weekly_digest(db: Session) -> str | None:
             report_type="weekly_digest",
             title="Weekly Market Digest",
             content=content,
-            metadata_json={"model": "claude-sonnet-4-20250514", "tokens": response.usage.output_tokens},
+            metadata_json={"model": "claude-sonnet-4-6", "tokens": response.usage.output_tokens},
         )
         return content
     except Exception as e:
