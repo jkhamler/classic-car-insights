@@ -9,8 +9,15 @@ from app.services.scoring import score_all_active
 from app.services.benchmark_calculator import recalculate_benchmarks
 from app.services.vehicle_matcher import match_vehicle
 from app.db.models.listing import Listing
+from app.services.seed import seed_all
 
 router = APIRouter()
+
+
+@router.post("/seed")
+def seed_database(db: Session = Depends(get_db)):
+    result = seed_all(db)
+    return result
 
 
 @router.post("/scrape/{source_name}")
