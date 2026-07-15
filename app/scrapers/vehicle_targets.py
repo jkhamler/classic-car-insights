@@ -21,6 +21,7 @@ MAKE_MAP: dict[str, str] = {
     "volvo": "Volvo",
     "mercedes-benz": "Mercedes-Benz",
     "mercedes": "Mercedes-Benz",
+    "tvr": "TVR",
 }
 
 # Model patterns are only tried for the make they're keyed under, since
@@ -62,6 +63,9 @@ MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {
     "Mercedes-Benz": [
         (r"e\s*55\s*amg", "E55 AMG"),
     ],
+    "TVR": [
+        (r"\bt350[ct]?\b", "T350"),
+    ],
 }
 
 
@@ -101,10 +105,11 @@ SEARCH_TERMS = [
     "aston+martin+v8+vantage", "aston+martin+vanquish",
     "volvo+850+t5r", "volvo+s60+r", "volvo+v70+r",
     "mercedes+e55+amg",
+    "tvr+t350",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
 # relying on is_target_vehicle() as the real filter after fetching.
 SEARCH_MAKES_ONLY = [
-    "Porsche", "Audi", "Alpina", "BMW", "Aston Martin", "Volvo", "Mercedes-Benz",
+    "Porsche", "Audi", "Alpina", "BMW", "Aston Martin", "Volvo", "Mercedes-Benz", "TVR",
 ]

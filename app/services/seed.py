@@ -45,6 +45,9 @@ SEED_VEHICLES = [
     VehicleCreate(make="Volvo", model="V70 R", generation="P2", year_start=2003, year_end=2007, country_of_origin="Sweden", segment="sedan", body_style="wagon", engine_type="2.5L Turbo I5"),
     VehicleCreate(make="Mercedes-Benz", model="E55 AMG", generation="W210", year_start=1999, year_end=2002, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="5.4L V8"),
     VehicleCreate(make="Mercedes-Benz", model="E55 AMG", generation="W211", year_start=2003, year_end=2006, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="5.4L Supercharged V8"),
+
+    # TVR
+    VehicleCreate(make="TVR", model="T350", generation="T350", year_start=2002, year_end=2006, country_of_origin="UK", segment="sports_car", body_style="coupe/targa", engine_type="3.6L Speed Six I6"),
 ]
 
 SEED_SOURCES = [
