@@ -41,9 +41,11 @@ def _listing_to_summary(listing: Listing, db: Session) -> ListingSummary:
 def top_opportunities(
     limit: int = Query(20, ge=1, le=100),
     make: str | None = None,
+    min_score: float = Query(50, description="Minimum undervaluation score"),
+    max_price_gbp: float = Query(50_000, description="Maximum listing price in GBP"),
     db: Session = Depends(get_db),
 ):
-    listings = get_top_opportunities(db, limit=limit, make=make)
+    listings = get_top_opportunities(db, limit=limit, make=make, min_score=min_score, max_price_gbp=max_price_gbp)
     return [_listing_to_summary(l, db) for l in listings]
 
 

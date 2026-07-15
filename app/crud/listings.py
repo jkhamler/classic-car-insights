@@ -96,13 +96,23 @@ def get_comparables(db: Session, listing: Listing, limit: int = 10) -> list[List
     return q.order_by(desc(Listing.scraped_at)).limit(limit).all()
 
 
-def get_top_opportunities(db: Session, limit: int = 20, make: str | None = None) -> list[Listing]:
+def get_top_opportunities(
+    db: Session,
+    limit: int = 20,
+    make: str | None = None,
+    min_score: float | None = None,
+    max_price_gbp: float | None = None,
+) -> list[Listing]:
     q = db.query(Listing).filter(
         Listing.status == "active",
         Listing.undervaluation_score.isnot(None),
     )
     if make:
         q = q.filter(Listing.make.ilike(f"%{make}%"))
+    if min_score is not None:
+        q = q.filter(Listing.undervaluation_score > min_score)
+    if max_price_gbp is not None:
+        q = q.filter(Listing.price_gbp < max_price_gbp)
     return q.order_by(desc(Listing.undervaluation_score)).limit(limit).all()
 
 
