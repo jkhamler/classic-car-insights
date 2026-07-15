@@ -67,6 +67,8 @@ class BidpathScraper(BaseScraper):
                     continue
 
                 card_text = clean_text(card.get_text(separator=" | ")) or ""
+                if self._is_closed(card_text):
+                    continue
                 price = self._find_price(card_text)
                 year = parse_year(title)
                 make, model = extract_make_model(title)
@@ -93,8 +95,13 @@ class BidpathScraper(BaseScraper):
 
         return listings
 
+    def _is_closed(self, text: str) -> bool:
+        # Bidpath tags ended lots with a "SOLD" badge and "Sold for £X" text —
+        # exclude those, we only want lots still open to bid or upcoming.
+        return bool(re.search(r"\bSOLD\b|\bWITHDRAWN\b|Sold for", text, re.IGNORECASE))
+
     def _find_price(self, text: str) -> float | None:
-        match = re.search(r"(?:Sold for|Estimate:?)\s*£\s*([\d,]+)", text, re.IGNORECASE)
+        match = re.search(r"Estimate:?\s*£\s*([\d,]+)", text, re.IGNORECASE)
         if not match:
             match = re.search(r"£\s*([\d,]+)", text)
         if match:
