@@ -6,6 +6,7 @@ separately to get individual lots.
 """
 import logging
 import re
+from datetime import date, datetime
 from urllib.parse import urljoin
 
 import httpx
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.angliacarauctions.co.uk"
 EVENT_LINK_RE = re.compile(r"^/auctions/\d+-[^/]+$")
+EVENT_DATE_RE = re.compile(r"-(\d{1,2})-([A-Za-z]{3})-(\d{4})$")
 LOT_LINK_RE = re.compile(r"/auctions/[^/]+/\d+~\d+-")
 
 
@@ -38,7 +40,7 @@ class AngliaCarAuctionsScraper(BaseScraper):
             return []
 
         event_urls = self._extract_event_urls(html)
-        logger.info(f"[Anglia] found {len(event_urls)} upcoming sale events")
+        logger.info(f"[Anglia] found {len(event_urls)} current/upcoming sale events")
 
         for event_url in event_urls:
             try:
@@ -52,13 +54,31 @@ class AngliaCarAuctionsScraper(BaseScraper):
         return all_listings
 
     def _extract_event_urls(self, html: str) -> list[str]:
+        # The /auctions page lists recently-past events alongside upcoming
+        # ones — only keep events dated today or later (mirrors the
+        # Bidpath lesson: don't trust an "auctions list" to mean "current").
         soup = BeautifulSoup(html, "lxml")
+        today = date.today()
         urls = set()
         for link in soup.find_all("a", href=True):
             href = link["href"]
-            if EVENT_LINK_RE.match(href):
-                urls.add(urljoin(BASE_URL, href))
+            if not EVENT_LINK_RE.match(href):
+                continue
+            event_date = self._parse_event_date(href)
+            if event_date is not None and event_date < today:
+                continue
+            urls.add(urljoin(BASE_URL, href))
         return sorted(urls)
+
+    def _parse_event_date(self, href: str) -> date | None:
+        match = EVENT_DATE_RE.search(href)
+        if not match:
+            return None
+        day, mon, year = match.groups()
+        try:
+            return datetime.strptime(f"{day}-{mon}-{year}", "%d-%b-%Y").date()
+        except ValueError:
+            return None
 
     def _parse_catalogue_page(self, html: str) -> list[RawListing]:
         soup = BeautifulSoup(html, "lxml")
