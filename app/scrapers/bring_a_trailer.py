@@ -8,22 +8,11 @@ from bs4 import BeautifulSoup
 from app.scrapers.base import BaseScraper, RawListing
 from app.scrapers.registry import register_scraper
 from app.scrapers.utils import parse_price, parse_year, to_gbp, clean_text
+from app.scrapers.vehicle_targets import SEARCH_TERMS, extract_make_model
 
 logger = logging.getLogger(__name__)
 
-TARGET_MAKES = [
-    "porsche+911", "porsche+944", "porsche+boxster", "porsche+cayman",
-    "bmw+m3", "bmw+m5",
-    "nissan+skyline", "nissan+350z",
-    "toyota+supra", "toyota+mr2",
-    "honda+nsx", "honda+s2000",
-    "mazda+rx-7", "mazda+mx-5",
-    "mitsubishi+lancer+evolution",
-    "subaru+impreza+sti",
-    "lotus+elise", "lotus+exige",
-    "mercedes+c63+amg", "mercedes+sl",
-    "alfa+romeo+gtv",
-]
+TARGET_MAKES = SEARCH_TERMS
 
 
 @register_scraper("bring_a_trailer")
@@ -128,38 +117,36 @@ class BringATrailerScraper(BaseScraper):
         return None
 
     def _extract_make_model(self, title: str) -> tuple[str | None, str | None]:
-        title_lower = title.lower()
-        make_map = {
-            "porsche": "Porsche", "bmw": "BMW", "nissan": "Nissan",
-            "toyota": "Toyota", "honda": "Honda", "mazda": "Mazda",
-            "mitsubishi": "Mitsubishi", "subaru": "Subaru",
-            "mercedes": "Mercedes-Benz", "lotus": "Lotus",
-            "alfa romeo": "Alfa Romeo",
-        }
-        make = None
-        for key, val in make_map.items():
-            if key in title_lower:
-                make = val
-                break
+        return extract_make_model(title)
 
-        model = None
-        model_patterns = [
-            r"(911|boxster|cayman|944|968)",
-            r"(m3|m5|m6|z3|z4)",
-            r"(skyline|gt-r|gtr|350z|370z)",
-            r"(supra|mr2|celica)",
-            r"(nsx|s2000|integra|civic type)",
-            r"(rx-7|rx7|mx-5|miata)",
-            r"(evo|lancer evolution)",
-            r"(impreza|wrx|sti)",
-            r"(elise|exige|esprit)",
-            r"(gtv|spider)",
-            r"(sl\d{2,3}|c63|e63|amg)",
-        ]
-        for pattern in model_patterns:
-            match = re.search(pattern, title_lower)
-            if match:
-                model = match.group(1).upper()
-                break
 
-        return make, model
+@register_scraper("bring_a_trailer_uk")
+class BringATrailerUKScraper(BringATrailerScraper):
+    """BaT's UK operation (bringatrailer.com/uk) — same platform and markup
+    as the main US site, just scoped to the UK landing page instead of a
+    search query, since BaT doesn't expose a documented country/location
+    search filter."""
+
+    source_name = "bring_a_trailer_uk"
+
+    def _find_price(self, text: str) -> float | None:
+        # UK listings show "GBP £15,500" rather than BaT's usual "$45,000"
+        match = re.search(r"GBP\s*£\s*([\d,]+)", text) or re.search(r"£\s*([\d,]+)", text)
+        if match:
+            val = parse_price(f"£{match.group(1)}")
+            if val and val >= 500:
+                return val
+        return None
+
+    async def scrape_listings(self, client: httpx.AsyncClient) -> list[RawListing]:
+        try:
+            html = await self.fetch_with_rate_limit(client, "https://bringatrailer.com/uk/")
+            listings = self._parse_search_results(html)
+            logger.info(f"[BaT UK] found {len(listings)} results")
+            for listing in listings:
+                listing.currency = "GBP"
+                listing.price_gbp = listing.sale_price
+            return listings
+        except Exception as e:
+            logger.error(f"[BaT UK] Failed to scrape: {e}")
+            return []

@@ -14,6 +14,12 @@ from app.jobs.scheduler import lifespan
 import app.scrapers.bring_a_trailer  # noqa: F401
 import app.scrapers.car_and_classic  # noqa: F401
 import app.scrapers.pistonheads  # noqa: F401
+import app.scrapers.trade_classics  # noqa: F401
+import app.scrapers.hampson_marketplace  # noqa: F401
+import app.scrapers.mathewsons  # noqa: F401
+import app.scrapers.historics  # noqa: F401
+import app.scrapers.anglia_car_auctions  # noqa: F401
+import app.scrapers.morris_leslie  # noqa: F401
 
 app = FastAPI(title="Classic Car Insights", lifespan=lifespan)
 

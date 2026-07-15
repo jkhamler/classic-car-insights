@@ -13,6 +13,7 @@ from app.crud.scrape_runs import create_scrape_run, complete_scrape_run
 from app.crud.sources import get_source_by_name
 from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
+from app.scrapers.vehicle_targets import is_target_vehicle, MAX_DISCOVERY_PRICE_GBP
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,14 @@ class BaseScraper(ABC):
             result.listings_found = len(raw_listings)
 
             for raw in raw_listings:
+                if not is_target_vehicle(raw.title):
+                    continue
+                if (
+                    self.source.source_type == "discovery"
+                    and raw.price_gbp is not None
+                    and raw.price_gbp > MAX_DISCOVERY_PRICE_GBP
+                ):
+                    continue
                 try:
                     listing_data = ListingCreate(
                         source_id=self.source.id,

@@ -12,13 +12,11 @@ from app.scrapers.utils import (
     parse_price, parse_year, parse_mileage, to_gbp,
     detect_currency, clean_text,
 )
+from app.scrapers.vehicle_targets import SEARCH_MAKES_ONLY, extract_make_model
 
 logger = logging.getLogger(__name__)
 
-SEARCH_MAKES = [
-    "Porsche", "BMW", "Nissan", "Toyota", "Honda", "Mazda",
-    "Mitsubishi", "Subaru", "Mercedes-Benz", "Lotus", "Alfa Romeo",
-]
+SEARCH_MAKES = SEARCH_MAKES_ONLY
 
 
 @register_scraper("pistonheads")
@@ -32,7 +30,7 @@ class PistonHeadsScraper(BaseScraper):
         for make in SEARCH_MAKES:
             try:
                 make_slug = make.lower().replace(" ", "-").replace("-benz", "")
-                url = f"https://www.pistonheads.com/classifieds?make={make_slug}&category=used&price-max=100000&year-min=1989&year-max=2015"
+                url = f"https://www.pistonheads.com/classifieds?make={make_slug}&category=used&price-max=30000&year-min=1989&year-max=2015"
                 html = await self.fetch_with_rate_limit(client, url)
                 listings = self._parse_search_page(html)
                 all_listings.extend(listings)
@@ -122,38 +120,4 @@ class PistonHeadsScraper(BaseScraper):
         return listings
 
     def _extract_make_model(self, title: str) -> tuple[str | None, str | None]:
-        title_lower = title.lower()
-        make_map = {
-            "porsche": "Porsche", "bmw": "BMW", "nissan": "Nissan",
-            "toyota": "Toyota", "honda": "Honda", "mazda": "Mazda",
-            "mitsubishi": "Mitsubishi", "subaru": "Subaru",
-            "mercedes": "Mercedes-Benz", "lotus": "Lotus",
-            "alfa romeo": "Alfa Romeo",
-        }
-        make = None
-        for key, val in make_map.items():
-            if key in title_lower:
-                make = val
-                break
-
-        model = None
-        model_patterns = [
-            r"(911|boxster|cayman|944|968)",
-            r"(m3|m5|m6|z3|z4|1m)",
-            r"(skyline|gt-r|gtr|350z|370z|silvia|200sx|pulsar)",
-            r"(supra|mr2|celica|ae86|gt86)",
-            r"(nsx|s2000|integra|civic type|ep3|fn2)",
-            r"(rx-7|rx7|mx-5|miata|mx5)",
-            r"(evo|lancer|evolution)",
-            r"(impreza|wrx|sti|forester sti)",
-            r"(elise|exige|esprit|evora)",
-            r"(gtv|spider|giulia|156 gta)",
-            r"(sl\d{2,3}|c63|e63|amg|190e)",
-        ]
-        for pattern in model_patterns:
-            match = re.search(pattern, title_lower)
-            if match:
-                model = match.group(1).upper()
-                break
-
-        return make, model
+        return extract_make_model(title)

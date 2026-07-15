@@ -4,73 +4,17 @@ from app.db.models.vehicle import Vehicle
 
 ALIASES: dict[str, tuple[str, str, str | None]] = {
     # (normalized_key) -> (make, model, generation)
-    # Porsche
-    "porsche 996": ("Porsche", "911", "996"),
-    "porsche 997": ("Porsche", "911", "997"),
+    # Porsche 911 — extract_make_model() labels these "911 996"/"911 997" (with
+    # "Turbo" suffix where relevant), which doesn't substring-match the
+    # model="911"/generation="996|997" schema, so they need explicit aliases.
+    "porsche 911 996 turbo": ("Porsche", "911", "996"),
     "porsche 911 996": ("Porsche", "911", "996"),
+    "porsche 996 turbo": ("Porsche", "911", "996"),
+    "porsche 996": ("Porsche", "911", "996"),
+    "porsche 911 997 turbo": ("Porsche", "911", "997"),
     "porsche 911 997": ("Porsche", "911", "997"),
-    "porsche boxster 986": ("Porsche", "Boxster", "986"),
-    "porsche cayman 987": ("Porsche", "Cayman", "987"),
-    "porsche 944": ("Porsche", "944", "944"),
-    # BMW
-    "bmw m3 e36": ("BMW", "M3", "E36"),
-    "bmw m3 e46": ("BMW", "M3", "E46"),
-    "bmw m3 e90": ("BMW", "M3", "E90/E92"),
-    "bmw m3 e92": ("BMW", "M3", "E90/E92"),
-    "bmw m5 e39": ("BMW", "M5", "E39"),
-    "bmw m5 e60": ("BMW", "M5", "E60"),
-    # Nissan
-    "nissan skyline r32": ("Nissan", "Skyline GT-R", "R32"),
-    "nissan skyline r33": ("Nissan", "Skyline GT-R", "R33"),
-    "nissan skyline r34": ("Nissan", "Skyline GT-R", "R34"),
-    "nissan gt-r r32": ("Nissan", "Skyline GT-R", "R32"),
-    "nissan gt-r r33": ("Nissan", "Skyline GT-R", "R33"),
-    "nissan gt-r r34": ("Nissan", "Skyline GT-R", "R34"),
-    "nissan gtr r34": ("Nissan", "Skyline GT-R", "R34"),
-    "nissan 350z": ("Nissan", "350Z", "Z33"),
-    # Toyota
-    "toyota supra": ("Toyota", "Supra", "A80"),
-    "toyota supra a80": ("Toyota", "Supra", "A80"),
-    "toyota mr2 sw20": ("Toyota", "MR2", "SW20"),
-    "toyota mr2": ("Toyota", "MR2", "SW20"),
-    # Honda
-    "honda nsx": ("Honda", "NSX", "NA1/NA2"),
-    "honda s2000": ("Honda", "S2000", "AP1/AP2"),
-    "honda integra type r": ("Honda", "Integra Type R", "DC2"),
-    "honda integra": ("Honda", "Integra Type R", "DC2"),
-    # Mazda
-    "mazda rx-7": ("Mazda", "RX-7", "FD"),
-    "mazda rx7": ("Mazda", "RX-7", "FD"),
-    "mazda mx-5 na": ("Mazda", "MX-5", "NA"),
-    "mazda mx-5 nb": ("Mazda", "MX-5", "NB"),
-    "mazda miata na": ("Mazda", "MX-5", "NA"),
-    "mazda miata nb": ("Mazda", "MX-5", "NB"),
-    "mazda mx5": ("Mazda", "MX-5", "NA"),
-    "mazda miata": ("Mazda", "MX-5", "NA"),
-    # Mitsubishi
-    "mitsubishi evo vi": ("Mitsubishi", "Lancer Evolution", "VI"),
-    "mitsubishi evo 6": ("Mitsubishi", "Lancer Evolution", "VI"),
-    "mitsubishi lancer evolution vi": ("Mitsubishi", "Lancer Evolution", "VI"),
-    "mitsubishi evo": ("Mitsubishi", "Lancer Evolution", "VII-IX"),
-    "mitsubishi lancer evolution": ("Mitsubishi", "Lancer Evolution", "VII-IX"),
-    # Subaru
-    "subaru impreza wrx sti": ("Subaru", "Impreza WRX STI", "GD"),
-    "subaru impreza sti": ("Subaru", "Impreza WRX STI", "GD"),
-    "subaru wrx sti": ("Subaru", "Impreza WRX STI", "GD"),
-    "subaru impreza": ("Subaru", "Impreza WRX STI", "GD"),
-    # Mercedes
-    "mercedes c63": ("Mercedes-Benz", "C63 AMG", "W204"),
-    "mercedes c63 amg": ("Mercedes-Benz", "C63 AMG", "W204"),
-    "mercedes sl r129": ("Mercedes-Benz", "SL", "R129"),
-    "mercedes sl": ("Mercedes-Benz", "SL", "R129"),
-    # Lotus
-    "lotus elise s1": ("Lotus", "Elise", "S1"),
-    "lotus elise s2": ("Lotus", "Elise", "S2"),
-    "lotus elise": ("Lotus", "Elise", "S2"),
-    "lotus exige": ("Lotus", "Exige", "S2"),
-    # Alfa Romeo
-    "alfa romeo gtv": ("Alfa Romeo", "GTV", "916"),
-    "alfa gtv": ("Alfa Romeo", "GTV", "916"),
+    "porsche 997 turbo": ("Porsche", "911", "997"),
+    "porsche 997": ("Porsche", "911", "997"),
 }
 
 

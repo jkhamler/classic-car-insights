@@ -6,40 +6,45 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # European performance
-    VehicleCreate(make="Porsche", model="911", generation="996", year_start=1998, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.4L/3.6L Flat-6"),
-    VehicleCreate(make="Porsche", model="911", generation="997", year_start=2004, year_end=2012, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.6L/3.8L Flat-6"),
-    VehicleCreate(make="Porsche", model="Boxster", generation="986", year_start=1996, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="convertible", engine_type="2.5L/2.7L/3.2L Flat-6"),
-    VehicleCreate(make="Porsche", model="Cayman", generation="987", year_start=2005, year_end=2012, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="2.7L/2.9L/3.4L Flat-6"),
-    VehicleCreate(make="Porsche", model="944", generation="944", year_start=1982, year_end=1991, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="2.5L/3.0L I4/I4 Turbo"),
-    VehicleCreate(make="BMW", model="M3", generation="E36", year_start=1992, year_end=1999, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.0L/3.2L I6"),
-    VehicleCreate(make="BMW", model="M3", generation="E46", year_start=2000, year_end=2006, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.2L I6"),
-    VehicleCreate(make="BMW", model="M3", generation="E90/E92", year_start=2007, year_end=2013, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="4.0L V8"),
-    VehicleCreate(make="BMW", model="M5", generation="E39", year_start=1998, year_end=2003, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="4.9L V8"),
-    VehicleCreate(make="BMW", model="M5", generation="E60", year_start=2005, year_end=2010, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="5.0L V10"),
-    VehicleCreate(make="Mercedes-Benz", model="C63 AMG", generation="W204", year_start=2008, year_end=2014, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="6.2L V8"),
-    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R129", year_start=1989, year_end=2001, country_of_origin="Germany", segment="gt", body_style="convertible", engine_type="Various V6/V8/V12"),
-    VehicleCreate(make="Lotus", model="Elise", generation="S1", year_start=1996, year_end=2001, country_of_origin="UK", segment="sports_car", body_style="convertible", engine_type="1.8L I4"),
-    VehicleCreate(make="Lotus", model="Elise", generation="S2", year_start=2001, year_end=2011, country_of_origin="UK", segment="sports_car", body_style="convertible", engine_type="1.8L I4"),
-    VehicleCreate(make="Lotus", model="Exige", generation="S2", year_start=2004, year_end=2011, country_of_origin="UK", segment="sports_car", body_style="coupe", engine_type="1.8L I4/Supercharged"),
-    VehicleCreate(make="Alfa Romeo", model="GTV", generation="916", year_start=1995, year_end=2006, country_of_origin="Italy", segment="sports_car", body_style="coupe", engine_type="2.0L/3.0L/3.2L V6"),
+    # Porsche 911 — particularly Turbo
+    VehicleCreate(make="Porsche", model="911", generation="996", year_start=1998, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.4L/3.6L Flat-6 (Turbo: 3.6L Twin-Turbo)"),
+    VehicleCreate(make="Porsche", model="911", generation="997", year_start=2004, year_end=2012, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.6L/3.8L Flat-6 (Turbo: 3.6L/3.8L Twin-Turbo)"),
 
-    # Japanese performance
-    VehicleCreate(make="Nissan", model="Skyline GT-R", generation="R32", year_start=1989, year_end=1994, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="2.6L Twin-Turbo I6"),
-    VehicleCreate(make="Nissan", model="Skyline GT-R", generation="R33", year_start=1995, year_end=1998, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="2.6L Twin-Turbo I6"),
-    VehicleCreate(make="Nissan", model="Skyline GT-R", generation="R34", year_start=1999, year_end=2002, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="2.6L Twin-Turbo I6"),
-    VehicleCreate(make="Nissan", model="350Z", generation="Z33", year_start=2002, year_end=2009, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="3.5L V6"),
-    VehicleCreate(make="Toyota", model="Supra", generation="A80", year_start=1993, year_end=2002, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="3.0L Twin-Turbo I6"),
-    VehicleCreate(make="Toyota", model="MR2", generation="SW20", year_start=1989, year_end=1999, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="2.0L I4/Turbo"),
-    VehicleCreate(make="Honda", model="NSX", generation="NA1/NA2", year_start=1990, year_end=2005, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="3.0L/3.2L V6"),
-    VehicleCreate(make="Honda", model="S2000", generation="AP1/AP2", year_start=1999, year_end=2009, country_of_origin="Japan", segment="sports_car", body_style="convertible", engine_type="2.0L/2.2L I4"),
-    VehicleCreate(make="Honda", model="Integra Type R", generation="DC2", year_start=1995, year_end=2001, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="1.8L I4 VTEC"),
-    VehicleCreate(make="Mazda", model="RX-7", generation="FD", year_start=1992, year_end=2002, country_of_origin="Japan", segment="sports_car", body_style="coupe", engine_type="1.3L Twin-Turbo Rotary"),
-    VehicleCreate(make="Mazda", model="MX-5", generation="NA", year_start=1989, year_end=1997, country_of_origin="Japan", segment="sports_car", body_style="convertible", engine_type="1.6L/1.8L I4"),
-    VehicleCreate(make="Mazda", model="MX-5", generation="NB", year_start=1998, year_end=2005, country_of_origin="Japan", segment="sports_car", body_style="convertible", engine_type="1.6L/1.8L I4"),
-    VehicleCreate(make="Mitsubishi", model="Lancer Evolution", generation="VI", year_start=1999, year_end=2001, country_of_origin="Japan", segment="sedan", body_style="sedan", engine_type="2.0L Turbo I4"),
-    VehicleCreate(make="Mitsubishi", model="Lancer Evolution", generation="VII-IX", year_start=2001, year_end=2007, country_of_origin="Japan", segment="sedan", body_style="sedan", engine_type="2.0L Turbo I4"),
-    VehicleCreate(make="Subaru", model="Impreza WRX STI", generation="GD", year_start=2000, year_end=2007, country_of_origin="Japan", segment="sedan", body_style="sedan", engine_type="2.0L/2.5L Turbo Flat-4"),
+    # Audi RS4 / RS6
+    VehicleCreate(make="Audi", model="RS4", generation="B5", year_start=2000, year_end=2001, country_of_origin="Germany", segment="sedan", body_style="wagon", engine_type="2.7L Twin-Turbo V6"),
+    VehicleCreate(make="Audi", model="RS4", generation="B7", year_start=2006, year_end=2008, country_of_origin="Germany", segment="sedan", body_style="saloon/wagon", engine_type="4.2L V8"),
+    VehicleCreate(make="Audi", model="RS4", generation="B8", year_start=2012, year_end=2015, country_of_origin="Germany", segment="sedan", body_style="saloon/wagon", engine_type="4.2L V8"),
+    VehicleCreate(make="Audi", model="RS6", generation="C5", year_start=2002, year_end=2004, country_of_origin="Germany", segment="sedan", body_style="saloon/wagon", engine_type="4.2L Twin-Turbo V8"),
+    VehicleCreate(make="Audi", model="RS6", generation="C6", year_start=2008, year_end=2010, country_of_origin="Germany", segment="sedan", body_style="saloon/wagon", engine_type="5.0L Twin-Turbo V10"),
+
+    # Alpina
+    VehicleCreate(make="Alpina", model="B3", generation="E36", year_start=1994, year_end=1996, country_of_origin="Germany", segment="sports_car", body_style="coupe/convertible", engine_type="3.2L I6"),
+    VehicleCreate(make="Alpina", model="B3", generation="E46", year_start=2002, year_end=2006, country_of_origin="Germany", segment="sports_car", body_style="coupe/convertible", engine_type="3.3L I6"),
+    VehicleCreate(make="Alpina", model="B3", generation="E90/E92", year_start=2009, year_end=2013, country_of_origin="Germany", segment="sports_car", body_style="coupe/saloon", engine_type="3.0L Bi-Turbo I6"),
+    VehicleCreate(make="Alpina", model="B5", generation="E39", year_start=1998, year_end=2003, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="4.8L V8"),
+    VehicleCreate(make="Alpina", model="B5", generation="E60", year_start=2007, year_end=2010, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="4.4L Supercharged V8"),
+    VehicleCreate(make="Alpina", model="B6", generation="E63", year_start=2007, year_end=2010, country_of_origin="Germany", segment="gt", body_style="coupe/convertible", engine_type="4.4L Supercharged V8"),
+    VehicleCreate(make="Alpina", model="B10", generation="E34", year_start=1989, year_end=1994, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="3.5L/3.9L V8"),
+    VehicleCreate(make="Alpina", model="B10", generation="E39", year_start=1996, year_end=2002, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="4.6L/4.7L V8"),
+    VehicleCreate(make="Alpina", model="D3", generation="E90", year_start=2008, year_end=2012, country_of_origin="Germany", segment="sedan", body_style="sedan/wagon", engine_type="2.0L Bi-Turbo Diesel I4"),
+
+    # BMW Z3 M / Z4 M
+    VehicleCreate(make="BMW", model="Z3 M", generation="E36/7-8", year_start=1997, year_end=2002, country_of_origin="Germany", segment="sports_car", body_style="coupe/roadster", engine_type="3.2L I6"),
+    VehicleCreate(make="BMW", model="Z4 M", generation="E85/E86", year_start=2006, year_end=2008, country_of_origin="Germany", segment="sports_car", body_style="coupe/roadster", engine_type="3.2L I6"),
+
+    # Aston Martin
+    VehicleCreate(make="Aston Martin", model="DB7", generation="i6/V12 Vantage", year_start=1994, year_end=2003, country_of_origin="UK", segment="gt", body_style="coupe/convertible", engine_type="3.2L I6 Supercharged / 5.9L V12"),
+    VehicleCreate(make="Aston Martin", model="DB9", generation="DB9", year_start=2004, year_end=2016, country_of_origin="UK", segment="gt", body_style="coupe/convertible", engine_type="5.9L V12"),
+    VehicleCreate(make="Aston Martin", model="V8 Vantage", generation="V8 Vantage", year_start=2005, year_end=2017, country_of_origin="UK", segment="sports_car", body_style="coupe/convertible", engine_type="4.3L/4.7L V8"),
+    VehicleCreate(make="Aston Martin", model="Vanquish", generation="Vanquish", year_start=2001, year_end=2007, country_of_origin="UK", segment="gt", body_style="coupe", engine_type="5.9L V12"),
+
+    # Japan-import Volvo/BMW/Audi/Mercedes performance
+    VehicleCreate(make="Volvo", model="850 T5-R", generation="850", year_start=1994, year_end=1996, country_of_origin="Sweden", segment="sedan", body_style="saloon/wagon", engine_type="2.3L Turbo I5"),
+    VehicleCreate(make="Volvo", model="850R", generation="850", year_start=1996, year_end=1997, country_of_origin="Sweden", segment="sedan", body_style="saloon/wagon", engine_type="2.3L Turbo I5"),
+    VehicleCreate(make="Volvo", model="S60 R", generation="P2", year_start=2003, year_end=2007, country_of_origin="Sweden", segment="sedan", body_style="sedan", engine_type="2.5L Turbo I5"),
+    VehicleCreate(make="Volvo", model="V70 R", generation="P2", year_start=2003, year_end=2007, country_of_origin="Sweden", segment="sedan", body_style="wagon", engine_type="2.5L Turbo I5"),
+    VehicleCreate(make="Mercedes-Benz", model="E55 AMG", generation="W210", year_start=1999, year_end=2002, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="5.4L V8"),
+    VehicleCreate(make="Mercedes-Benz", model="E55 AMG", generation="W211", year_start=2003, year_end=2006, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="5.4L Supercharged V8"),
 ]
 
 SEED_SOURCES = [
@@ -65,6 +70,62 @@ SEED_SOURCES = [
         source_type="discovery",
         base_url="https://www.pistonheads.com",
         scraper_class="PistonHeadsScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="bring_a_trailer_uk",
+        display_name="Bring a Trailer (UK)",
+        source_type="benchmark",
+        base_url="https://bringatrailer.com/uk",
+        scraper_class="BringATrailerUKScraper",
+        scrape_frequency_minutes=720,
+    ),
+    SourceCreate(
+        name="trade_classics",
+        display_name="Trade Classics",
+        source_type="discovery",
+        base_url="https://www.tradeclassics.com",
+        scraper_class="TradeClassicsScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="hampson_marketplace",
+        display_name="Hampson Marketplace",
+        source_type="discovery",
+        base_url="https://hampson.go-auction.com",
+        scraper_class="HampsonMarketplaceScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="mathewsons",
+        display_name="Mathewsons",
+        source_type="discovery",
+        base_url="https://www.mathewsons.co.uk",
+        scraper_class="MathewsonsScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="historics",
+        display_name="Historics Auctioneers",
+        source_type="discovery",
+        base_url="https://www.historics.co.uk",
+        scraper_class="HistoricsScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="anglia_car_auctions",
+        display_name="Anglia Car Auctions",
+        source_type="discovery",
+        base_url="https://www.angliacarauctions.co.uk",
+        scraper_class="AngliaCarAuctionsScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="morris_leslie",
+        display_name="Morris Leslie Auctions",
+        source_type="discovery",
+        base_url="https://auction.morrisleslie.com",
+        scraper_class="MorrisLeslieScraper",
         scrape_frequency_minutes=360,
     ),
 ]

@@ -28,10 +28,38 @@ def setup_scheduler():
         args=["pistonheads"], id="scrape_pistonheads",
         next_run_time=None,  # stagger: starts after 2h
     )
-    # Benchmark scraper — every 12 hours
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["trade_classics"], id="scrape_trade_classics",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["hampson_marketplace"], id="scrape_hampson_marketplace",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["mathewsons"], id="scrape_mathewsons",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["historics"], id="scrape_historics",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["anglia_car_auctions"], id="scrape_anglia_car_auctions",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["morris_leslie"], id="scrape_morris_leslie",
+    )
+    # Benchmark scrapers — every 12 hours
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=12),
         args=["bring_a_trailer"], id="scrape_bat",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=12),
+        args=["bring_a_trailer_uk"], id="scrape_bat_uk",
     )
     # Nightly re-scoring at 3 AM
     scheduler.add_job(
