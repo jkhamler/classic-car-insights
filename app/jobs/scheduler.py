@@ -21,10 +21,6 @@ def setup_scheduler():
     # Discovery scrapers — every 6 hours, staggered
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=6),
-        args=["car_and_classic"], id="scrape_car_and_classic",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
         args=["pistonheads"], id="scrape_pistonheads",
         next_run_time=None,  # stagger: starts after 2h
     )
@@ -51,6 +47,26 @@ def setup_scheduler():
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=6),
         args=["morris_leslie"], id="scrape_morris_leslie",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["manor_park"], id="scrape_manor_park",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["porsche_911uk"], id="scrape_porsche_911uk",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["bmw_car_club_gb"], id="scrape_bmw_car_club_gb",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["charterhouse"], id="scrape_charterhouse",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=6),
+        args=["gumtree"], id="scrape_gumtree",
     )
     # Benchmark scrapers — every 12 hours
     scheduler.add_job(
