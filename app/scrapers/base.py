@@ -55,6 +55,7 @@ class ScrapeResult:
 class BaseScraper(ABC):
     source_name: str
     rate_limit_seconds: float = 2.0
+    user_agent: str = "ClassicCarInsights/1.0"
 
     def __init__(self, db: Session):
         self.db = db
@@ -79,7 +80,7 @@ class BaseScraper(ABC):
         try:
             async with httpx.AsyncClient(
                 timeout=30.0,
-                headers={"User-Agent": "ClassicCarInsights/1.0"},
+                headers={"User-Agent": self.user_agent},
                 follow_redirects=True,
             ) as client:
                 raw_listings = await self.scrape_listings(client)

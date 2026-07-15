@@ -29,6 +29,12 @@ FORUMS = [
 class Porsche911UKScraper(BaseScraper):
     source_name = "porsche_911uk"
     rate_limit_seconds = 3.0
+    # 911uk's forum protection 403s Railway's datacenter IP range under the
+    # generic scraper UA; a realistic browser UA is worth trying first.
+    user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+    )
 
     async def scrape_listings(self, client: httpx.AsyncClient) -> list[RawListing]:
         all_listings: list[RawListing] = []
