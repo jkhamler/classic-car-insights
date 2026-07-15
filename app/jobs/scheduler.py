@@ -18,63 +18,63 @@ scheduler = AsyncIOScheduler()
 
 
 def setup_scheduler():
-    # Discovery scrapers — every 6 hours, staggered
+    # Discovery scrapers — daily, staggered
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["pistonheads"], id="scrape_pistonheads",
-        next_run_time=None,  # stagger: starts after 2h
+        next_run_time=None,  # stagger start
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["trade_classics"], id="scrape_trade_classics",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["hampson_marketplace"], id="scrape_hampson_marketplace",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["mathewsons"], id="scrape_mathewsons",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["historics"], id="scrape_historics",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["anglia_car_auctions"], id="scrape_anglia_car_auctions",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["morris_leslie"], id="scrape_morris_leslie",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["manor_park"], id="scrape_manor_park",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["porsche_911uk"], id="scrape_porsche_911uk",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["bmw_car_club_gb"], id="scrape_bmw_car_club_gb",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["charterhouse"], id="scrape_charterhouse",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=6),
+        run_scraper, IntervalTrigger(hours=24),
         args=["gumtree"], id="scrape_gumtree",
     )
-    # Benchmark scrapers — every 12 hours
+    # Benchmark scrapers — daily
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=12),
+        run_scraper, IntervalTrigger(hours=24),
         args=["bring_a_trailer"], id="scrape_bat",
     )
     scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=12),
+        run_scraper, IntervalTrigger(hours=24),
         args=["bring_a_trailer_uk"], id="scrape_bat_uk",
     )
     # Nightly re-scoring at 3 AM
