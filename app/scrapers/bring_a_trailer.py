@@ -51,13 +51,16 @@ class BringATrailerScraper(BaseScraper):
                 if not href.startswith("http"):
                     href = f"https://bringatrailer.com{href}"
 
-                seen_urls.add(href)
-                slug = href.rstrip("/").split("/")[-1]
-
-                # Get all text from the link and its parent context
+                # Each listing card has this href twice — an empty
+                # image-wrapper link first, then the real title-text link.
+                # Don't mark seen until we actually get usable text, or the
+                # second (real) occurrence gets skipped as a "duplicate".
                 text = clean_text(link.get_text(separator=" | "))
                 if not text or len(text) < 10:
                     continue
+                seen_urls.add(href)
+
+                slug = href.rstrip("/").split("/")[-1]
 
                 # Also grab text from sibling/parent elements for price context
                 parent = link.parent

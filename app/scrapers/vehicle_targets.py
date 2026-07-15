@@ -86,6 +86,18 @@ def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
         if re.search(pattern, lowered):
             return make, label
 
+    if make == "Porsche" and re.search(r"\b911\b", lowered):
+        # Many listings (BaT in particular) never state the chassis code,
+        # just "911 Turbo"/"911 Carrera" — infer 996 vs 997 from the year.
+        year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
+        if year_match:
+            year = int(year_match.group(1))
+            suffix = " Turbo" if "turbo" in lowered else ""
+            if 1998 <= year <= 2004:
+                return make, "911 996" + suffix
+            if 2005 <= year <= 2012:
+                return make, "911 997" + suffix
+
     return make, None
 
 
