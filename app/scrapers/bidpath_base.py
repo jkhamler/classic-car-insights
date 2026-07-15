@@ -15,9 +15,11 @@ from bs4 import BeautifulSoup
 
 from app.scrapers.base import BaseScraper, RawListing
 from app.scrapers.utils import parse_price, parse_year, clean_text
-from app.scrapers.vehicle_targets import SEARCH_TERMS, extract_make_model
+from app.scrapers.vehicle_targets import extract_make_model
 
 logger = logging.getLogger(__name__)
+
+MAX_PAGES_PER_AUCTION = 3
 
 
 class BidpathScraper(BaseScraper):
@@ -25,21 +27,46 @@ class BidpathScraper(BaseScraper):
     rate_limit_seconds = 2.5
 
     async def scrape_listings(self, client: httpx.AsyncClient) -> list[RawListing]:
+        try:
+            home_html = await self.fetch_with_rate_limit(client, f"{self.base_url}/")
+        except Exception as e:
+            logger.error(f"[{self.source_name}] Failed to fetch homepage: {e}")
+            return []
+
+        auction_ids = self._extract_current_auction_ids(home_html)
+        logger.info(f"[{self.source_name}] current auctions: {auction_ids}")
+
         all_listings: list[RawListing] = []
         seen_urls: set[str] = set()
 
-        for term in SEARCH_TERMS:
-            search_text = term.replace("+", " ")
-            try:
-                url = f"{self.base_url}/auction/search/?so=0&st={search_text}&sto=0&au=&pp=48&pn=1&g=1"
-                html = await self.fetch_with_rate_limit(client, url)
-                listings = self._parse_search_page(html, seen_urls)
-                all_listings.extend(listings)
-                logger.info(f"[{self.source_name}] {search_text}: found {len(listings)} results")
-            except Exception as e:
-                logger.error(f"[{self.source_name}] Failed to scrape '{search_text}': {e}")
+        for au_id in auction_ids:
+            for page in range(1, MAX_PAGES_PER_AUCTION + 1):
+                try:
+                    url = f"{self.base_url}/auction/search/?so=0&st=&sto=0&au={au_id}&pp=96&pn={page}&g=1"
+                    html = await self.fetch_with_rate_limit(client, url)
+                    listings = self._parse_search_page(html, seen_urls)
+                    if not listings and page > 1:
+                        break
+                    all_listings.extend(listings)
+                    logger.info(f"[{self.source_name}] au={au_id} page={page}: found {len(listings)} results")
+                    if len(listings) < 90:  # fewer than a full page — no more pages
+                        break
+                except Exception as e:
+                    logger.error(f"[{self.source_name}] Failed to scrape au={au_id} page={page}: {e}")
+                    break
 
         return all_listings
+
+    def _extract_current_auction_ids(self, html: str) -> list[str]:
+        # Only auctions linked from the homepage are current/upcoming — a
+        # blank `au=` search hits Bidpath's entire historical archive,
+        # including long-past sales whose unsold lots never get tagged SOLD.
+        ids = re.findall(r"\bau=(\d+)", html)
+        seen = []
+        for i in ids:
+            if i not in seen:
+                seen.append(i)
+        return seen
 
     def _parse_search_page(self, html: str, seen_urls: set[str]) -> list[RawListing]:
         soup = BeautifulSoup(html, "lxml")
