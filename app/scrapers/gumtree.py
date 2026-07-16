@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from app.scrapers.base import BaseScraper, RawListing
 from app.scrapers.registry import register_scraper
-from app.scrapers.utils import parse_price, parse_year, clean_text
+from app.scrapers.utils import parse_price, parse_year, parse_mileage, clean_text
 from app.scrapers.vehicle_targets import SEARCH_TERMS, extract_make_model
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,11 @@ class GumtreeScraper(BaseScraper):
                     continue
                 seen_urls.add(href)
 
+                seller_type_el = card.select_one('[data-q="motors-seller-type"]')
+                seller_type = clean_text(seller_type_el.get_text()) if seller_type_el else None
+                if seller_type and seller_type.strip().lower() == "trade":
+                    continue  # private sales only, no dealers
+
                 title_el = card.select_one('[data-q="tile-title"]')
                 title = clean_text(title_el.get_text()) if title_el else None
                 if not title or len(title) < 5:
@@ -63,6 +68,11 @@ class GumtreeScraper(BaseScraper):
 
                 location_el = card.select_one('[data-q="tile-location"]')
                 location = clean_text(location_el.get_text()) if location_el else None
+
+                mileage_el = card.select_one('[data-q="motors-mileage"]')
+                mileage, mileage_unit = (
+                    parse_mileage(mileage_el.get_text()) if mileage_el else (None, "miles")
+                )
 
                 slug = href.rstrip("/").split("/")[-1]
                 year = parse_year(title)
@@ -86,6 +96,8 @@ class GumtreeScraper(BaseScraper):
                     asking_price=price,
                     currency="GBP",
                     price_gbp=price,
+                    mileage=mileage,
+                    mileage_unit=mileage_unit,
                     location=location,
                     image_urls=image_urls,
                 ))

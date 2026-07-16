@@ -13,7 +13,9 @@ from app.crud.scrape_runs import create_scrape_run, complete_scrape_run
 from app.crud.sources import get_source_by_name
 from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
-from app.scrapers.vehicle_targets import is_target_vehicle, MAX_DISCOVERY_PRICE_GBP
+from app.scrapers.vehicle_targets import (
+    is_target_vehicle, MAX_DISCOVERY_PRICE_GBP, MAX_DISCOVERY_MILEAGE_MILES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,10 @@ class BaseScraper(ABC):
                     and raw.price_gbp > MAX_DISCOVERY_PRICE_GBP
                 ):
                     continue
+                if self.source.source_type == "discovery" and raw.mileage is not None:
+                    mileage_miles = raw.mileage * 0.621371 if raw.mileage_unit == "km" else raw.mileage
+                    if mileage_miles > MAX_DISCOVERY_MILEAGE_MILES:
+                        continue
                 try:
                     listing_data = ListingCreate(
                         source_id=self.source.id,

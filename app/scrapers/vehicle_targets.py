@@ -6,9 +6,11 @@ models" filter, applied uniformly regardless of source.
 """
 import re
 
-# Ceiling applied to discovery listings only (not benchmark sources, which
-# need full-range sold prices to compute an accurate fair-value baseline).
+# Ceilings applied to discovery listings only (not benchmark sources, which
+# need full-range sold prices/mileages to compute an accurate fair-value
+# baseline across the whole market, not just what the buyer wants to see).
 MAX_DISCOVERY_PRICE_GBP = 30_000
+MAX_DISCOVERY_MILEAGE_MILES = 100_000
 
 # Order matters: more specific keys must come before substrings they contain
 # (e.g. "alpina" before "bmw", since Alpina titles often also say "BMW").
@@ -28,10 +30,9 @@ MAKE_MAP: dict[str, str] = {
 # tokens like "b3"/"d3" are too generic to safely match against any title.
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {
     "Porsche": [
-        (r"996\s*turbo", "911 996 Turbo"),
-        (r"997\s*turbo", "911 997 Turbo"),
-        (r"\b996\b", "911 996"),
-        (r"\b997\b", "911 997"),
+        # Only 996 Turbo and 996 Carrera 4S — no other 996 trims, no 997 at all.
+        (r"(?=.*\b996\b)(?=.*turbo)", "911 996 Turbo"),
+        (r"(?=.*\b996\b)(?=.*(carrera\s*4s|c4s\b))", "911 996 Carrera 4S"),
     ],
     "Audi": [
         (r"\brs\s*4\b", "RS4"),
@@ -88,15 +89,16 @@ def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
 
     if make == "Porsche" and re.search(r"\b911\b", lowered):
         # Many listings (BaT in particular) never state the chassis code,
-        # just "911 Turbo"/"911 Carrera" — infer 996 vs 997 from the year.
+        # just "911 Turbo"/"911 Carrera 4S" — infer 996 from the year, but
+        # only for the two trims we actually track.
         year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
         if year_match:
             year = int(year_match.group(1))
-            suffix = " Turbo" if "turbo" in lowered else ""
             if 1998 <= year <= 2004:
-                return make, "911 996" + suffix
-            if 2005 <= year <= 2012:
-                return make, "911 997" + suffix
+                if "turbo" in lowered:
+                    return make, "911 996 Turbo"
+                if re.search(r"carrera\s*4s|c4s\b", lowered):
+                    return make, "911 996 Carrera 4S"
 
     return make, None
 
@@ -108,8 +110,7 @@ def is_target_vehicle(title: str | None) -> bool:
 
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
-    "porsche+911+996", "porsche+911+996+turbo",
-    "porsche+911+997", "porsche+911+997+turbo",
+    "porsche+911+996+turbo", "porsche+911+996+carrera+4s",
     "audi+rs4", "audi+rs6",
     "alpina+b3", "alpina+b5", "alpina+b6", "alpina+b10", "alpina+d3",
     "bmw+z3+m", "bmw+z4+m",

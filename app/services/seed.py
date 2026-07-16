@@ -6,9 +6,8 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Porsche 911 — particularly Turbo
-    VehicleCreate(make="Porsche", model="911", generation="996", year_start=1998, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.4L/3.6L Flat-6 (Turbo: 3.6L Twin-Turbo)"),
-    VehicleCreate(make="Porsche", model="911", generation="997", year_start=2004, year_end=2012, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.6L/3.8L Flat-6 (Turbo: 3.6L/3.8L Twin-Turbo)"),
+    # Porsche 911 996 — Turbo and Carrera 4S only
+    VehicleCreate(make="Porsche", model="911", generation="996", year_start=1998, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.6L Twin-Turbo Flat-6 (Turbo) / 3.6L Flat-6 (Carrera 4S)"),
 
     # Audi RS4 / RS6
     VehicleCreate(make="Audi", model="RS4", generation="B5", year_start=2000, year_end=2001, country_of_origin="Germany", segment="sedan", body_style="wagon", engine_type="2.7L Twin-Turbo V6"),
