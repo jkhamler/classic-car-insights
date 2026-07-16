@@ -31,11 +31,8 @@ SEED_VEHICLES = [
     VehicleCreate(make="BMW", model="Z3 M", generation="E36/7-8", year_start=1997, year_end=2002, country_of_origin="Germany", segment="sports_car", body_style="coupe/roadster", engine_type="3.2L I6"),
     VehicleCreate(make="BMW", model="Z4 M", generation="E85/E86", year_start=2006, year_end=2008, country_of_origin="Germany", segment="sports_car", body_style="coupe/roadster", engine_type="3.2L I6"),
 
-    # Aston Martin
-    VehicleCreate(make="Aston Martin", model="DB7", generation="i6/V12 Vantage", year_start=1994, year_end=2003, country_of_origin="UK", segment="gt", body_style="coupe/convertible", engine_type="3.2L I6 Supercharged / 5.9L V12"),
-    VehicleCreate(make="Aston Martin", model="DB9", generation="DB9", year_start=2004, year_end=2016, country_of_origin="UK", segment="gt", body_style="coupe/convertible", engine_type="5.9L V12"),
-    VehicleCreate(make="Aston Martin", model="V8 Vantage", generation="V8 Vantage", year_start=2005, year_end=2017, country_of_origin="UK", segment="sports_car", body_style="coupe/convertible", engine_type="4.3L/4.7L V8"),
-    VehicleCreate(make="Aston Martin", model="Vanquish", generation="Vanquish", year_start=2001, year_end=2007, country_of_origin="UK", segment="gt", body_style="coupe", engine_type="5.9L V12"),
+    # Aston Martin — DB7 Volante only
+    VehicleCreate(make="Aston Martin", model="DB7 Volante", generation="i6/V12 Vantage", year_start=1996, year_end=2003, country_of_origin="UK", segment="gt", body_style="convertible", engine_type="3.2L I6 Supercharged / 5.9L V12"),
 
     # Japan-import Volvo/BMW/Audi/Mercedes performance
     VehicleCreate(make="Volvo", model="850 T5-R", generation="850", year_start=1994, year_end=1996, country_of_origin="Sweden", segment="sedan", body_style="saloon/wagon", engine_type="2.3L Turbo I5"),

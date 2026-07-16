@@ -50,10 +50,8 @@ MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {
         (r"\bz4\s*m\b", "Z4 M"),
     ],
     "Aston Martin": [
-        (r"\bdb7\b", "DB7"),
-        (r"\bdb9\b", "DB9"),
-        (r"v8\s*vantage", "V8 Vantage"),
-        (r"\bvanquish\b", "Vanquish"),
+        # Only the DB7 Volante (convertible) — no DB7 coupe, DB9, V8 Vantage, Vanquish.
+        (r"(?=.*\bdb7\b)(?=.*volante)", "DB7 Volante"),
     ],
     "Volvo": [
         (r"850\s*t5-?r", "850 T5-R"),
@@ -114,8 +112,7 @@ SEARCH_TERMS = [
     "audi+rs4", "audi+rs6",
     "alpina+b3", "alpina+b5", "alpina+b6", "alpina+b10", "alpina+d3",
     "bmw+z3+m", "bmw+z4+m",
-    "aston+martin+db7", "aston+martin+db9",
-    "aston+martin+v8+vantage", "aston+martin+vanquish",
+    "aston+martin+db7+volante",
     "volvo+850+t5r", "volvo+s60+r", "volvo+v70+r",
     "mercedes+e55+amg",
     "tvr+t350",
