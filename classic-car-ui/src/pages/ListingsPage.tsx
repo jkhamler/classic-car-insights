@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import { fetchListings } from '../services/api';
 import ScoreBadge from '../components/common/ScoreBadge';
@@ -82,16 +81,17 @@ export default function ListingsPage() {
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Year</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Source</th>
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Score</th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-500"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {data.items.map((l) => (
                   <tr key={l.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3">
-                      <Link to={`/listings/${l.id}`} className="font-medium text-slate-900 hover:text-emerald-700">
+                      <a href={l.listing_url} target="_blank" rel="noopener noreferrer"
+                         className="inline-flex items-center gap-1 font-medium text-slate-900 hover:text-emerald-700">
                         {l.title.length > 60 ? l.title.slice(0, 60) + '...' : l.title}
-                      </Link>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      </a>
                     </td>
                     <td className="px-4 py-3 font-semibold">{formatPrice(l.price_gbp)}</td>
                     <td className="px-4 py-3 text-slate-500">{l.year ?? '—'}</td>
@@ -101,12 +101,6 @@ export default function ListingsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3"><ScoreBadge score={l.undervaluation_score} /></td>
-                    <td className="px-4 py-3">
-                      <a href={l.listing_url} target="_blank" rel="noopener noreferrer"
-                         className="text-slate-400 hover:text-slate-600">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </td>
                   </tr>
                 ))}
               </tbody>
