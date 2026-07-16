@@ -21,11 +21,6 @@ def setup_scheduler():
     # Discovery scrapers — daily, staggered
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),
-        args=["pistonheads"], id="scrape_pistonheads",
-        next_run_time=None,  # stagger start
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
         args=["trade_classics"], id="scrape_trade_classics",
     )
     scheduler.add_job(

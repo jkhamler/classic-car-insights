@@ -12,7 +12,6 @@ from app.jobs.scheduler import lifespan
 
 # Import scrapers to trigger registration
 import app.scrapers.bring_a_trailer  # noqa: F401
-import app.scrapers.pistonheads  # noqa: F401
 import app.scrapers.trade_classics  # noqa: F401
 import app.scrapers.hampson_marketplace  # noqa: F401
 import app.scrapers.mathewsons  # noqa: F401

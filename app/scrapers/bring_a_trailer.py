@@ -7,33 +7,31 @@ from bs4 import BeautifulSoup
 
 from app.scrapers.base import BaseScraper, RawListing
 from app.scrapers.registry import register_scraper
-from app.scrapers.utils import parse_price, parse_year, to_gbp, clean_text
-from app.scrapers.vehicle_targets import SEARCH_TERMS, extract_make_model
+from app.scrapers.utils import parse_price, parse_year, clean_text
+from app.scrapers.vehicle_targets import extract_make_model
 
 logger = logging.getLogger(__name__)
-
-TARGET_MAKES = SEARCH_TERMS
 
 
 @register_scraper("bring_a_trailer")
 class BringATrailerScraper(BaseScraper):
+    """Restricted to BaT's UK-location filter — every source in this
+    platform is UK-only, benchmark included. BaT's global search covers a
+    huge (mostly non-UK) inventory, so this deliberately gives up most of
+    that volume rather than mix in non-UK comps."""
+
     source_name = "bring_a_trailer"
     rate_limit_seconds = 3.0
 
     async def scrape_listings(self, client: httpx.AsyncClient) -> list[RawListing]:
-        all_listings: list[RawListing] = []
-
-        for search_term in TARGET_MAKES:
-            try:
-                url = f"https://bringatrailer.com/search/?s={search_term}&sort=date&type=auctions&sale_status=sold"
-                html = await self.fetch_with_rate_limit(client, url)
-                listings = self._parse_search_results(html)
-                all_listings.extend(listings)
-                logger.info(f"[BaT] {search_term}: found {len(listings)} results")
-            except Exception as e:
-                logger.error(f"[BaT] Failed to scrape {search_term}: {e}")
-
-        return all_listings
+        try:
+            html = await self.fetch_with_rate_limit(client, "https://bringatrailer.com/location/united-kingdom/")
+            listings = self._parse_search_results(html)
+            logger.info(f"[BaT] UK-location: found {len(listings)} results")
+            return listings
+        except Exception as e:
+            logger.error(f"[BaT] Failed to scrape UK-location page: {e}")
+            return []
 
     def _parse_search_results(self, html: str) -> list[RawListing]:
         soup = BeautifulSoup(html, "lxml")
@@ -91,8 +89,8 @@ class BringATrailerScraper(BaseScraper):
                     model=model,
                     year=year,
                     sale_price=sale_price,
-                    currency="USD",
-                    price_gbp=to_gbp(sale_price, "USD"),
+                    currency="GBP",
+                    price_gbp=sale_price,
                 ))
             except Exception as e:
                 logger.debug(f"[BaT] Error parsing link: {e}")
@@ -111,11 +109,12 @@ class BringATrailerScraper(BaseScraper):
         return parts[0].strip() if parts else None
 
     def _find_price(self, text: str) -> float | None:
-        # BaT shows prices as "$45,000" or "Sold for $45,000"
-        matches = re.findall(r"\$\s*([\d,]+)", text)
-        for m in matches:
-            val = parse_price(f"${m}")
-            if val and val >= 1000:  # Filter out noise
+        # UK-located BaT listings show "GBP £15,500" rather than the site's
+        # usual USD "$45,000" for its non-UK inventory.
+        match = re.search(r"GBP\s*£\s*([\d,]+)", text) or re.search(r"£\s*([\d,]+)", text)
+        if match:
+            val = parse_price(f"£{match.group(1)}")
+            if val and val >= 500:
                 return val
         return None
 
@@ -125,30 +124,18 @@ class BringATrailerScraper(BaseScraper):
 
 @register_scraper("bring_a_trailer_uk")
 class BringATrailerUKScraper(BringATrailerScraper):
-    """BaT's UK operation (bringatrailer.com/uk) — same platform and markup
-    as the main US site, just scoped to the UK landing page instead of a
-    search query, since BaT doesn't expose a documented country/location
-    search filter."""
+    """BaT's UK operation (bringatrailer.com/uk) — a different entry point
+    into BaT's UK-located inventory than the /location/united-kingdom/
+    filter, so it's kept as a separate source for extra coverage rather
+    than merged with BringATrailerScraper."""
 
     source_name = "bring_a_trailer_uk"
-
-    def _find_price(self, text: str) -> float | None:
-        # UK listings show "GBP £15,500" rather than BaT's usual "$45,000"
-        match = re.search(r"GBP\s*£\s*([\d,]+)", text) or re.search(r"£\s*([\d,]+)", text)
-        if match:
-            val = parse_price(f"£{match.group(1)}")
-            if val and val >= 500:
-                return val
-        return None
 
     async def scrape_listings(self, client: httpx.AsyncClient) -> list[RawListing]:
         try:
             html = await self.fetch_with_rate_limit(client, "https://bringatrailer.com/uk/")
             listings = self._parse_search_results(html)
             logger.info(f"[BaT UK] found {len(listings)} results")
-            for listing in listings:
-                listing.currency = "GBP"
-                listing.price_gbp = listing.sale_price
             return listings
         except Exception as e:
             logger.error(f"[BaT UK] Failed to scrape: {e}")

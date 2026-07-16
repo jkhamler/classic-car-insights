@@ -59,14 +59,6 @@ SEED_SOURCES = [
         scrape_frequency_minutes=720,
     ),
     SourceCreate(
-        name="pistonheads",
-        display_name="PistonHeads",
-        source_type="discovery",
-        base_url="https://www.pistonheads.com",
-        scraper_class="PistonHeadsScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
         name="bring_a_trailer_uk",
         display_name="Bring a Trailer (UK)",
         source_type="benchmark",
