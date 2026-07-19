@@ -42,6 +42,10 @@ SEED_VEHICLES = [
     VehicleCreate(make="Mercedes-Benz", model="E55 AMG", generation="W210", year_start=1999, year_end=2002, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="5.4L V8"),
     VehicleCreate(make="Mercedes-Benz", model="E55 AMG", generation="W211", year_start=2003, year_end=2006, country_of_origin="Germany", segment="sedan", body_style="sedan", engine_type="5.4L Supercharged V8"),
 
+    # Mercedes-Benz SL — R107/R129 6-cylinder only (280SL/300SL/320SL badges, no V8)
+    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R107", year_start=1971, year_end=1989, country_of_origin="Germany", segment="gt", body_style="convertible", engine_type="2.8L/3.0L I6"),
+    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R129", year_start=1989, year_end=2001, country_of_origin="Germany", segment="gt", body_style="convertible", engine_type="2.8L/3.2L I6/V6"),
+
     # TVR
     VehicleCreate(make="TVR", model="T350", generation="T350", year_start=2002, year_end=2006, country_of_origin="UK", segment="sports_car", body_style="coupe/targa", engine_type="3.6L Speed Six I6"),
 ]

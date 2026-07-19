@@ -98,6 +98,16 @@ def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
                 if re.search(r"carrera\s*4s|c4s\b", lowered):
                     return make, "911 996 Carrera 4S"
 
+    if make == "Mercedes-Benz" and re.search(r"\b(280|300|320)\s*sl\b|\bsl\s*(280|300|320)\b", lowered):
+        # R107 (1971-89) and R129 (1989-2001) 6-cylinder badges only —
+        # 280SL/300SL/320SL. Deliberately excludes V8 badges (350/380/420/
+        # 450/500/560/600) and, critically, requires a year in the R107/R129
+        # window so this can't false-positive on the unrelated W198 "300SL"
+        # Gullwing/Roadster (1954-63), which shares the same badge number.
+        year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
+        if year_match and 1971 <= int(year_match.group(1)) <= 2001:
+            return make, "SL"
+
     return make, None
 
 
@@ -115,6 +125,7 @@ SEARCH_TERMS = [
     "aston+martin+db7+volante",
     "volvo+850+t5r", "volvo+s60+r", "volvo+v70+r",
     "mercedes+e55+amg",
+    "mercedes+280sl", "mercedes+300sl", "mercedes+320sl",
     "tvr+t350",
 ]
 
