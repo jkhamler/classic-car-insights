@@ -143,10 +143,14 @@ class BaseScraper(ABC):
                     logger.error(f"Error upserting listing {raw.external_id}: {e}")
                     result.errors.append(str(e))
 
-            # Only delist against a non-empty sweep — an empty result is more
-            # likely a broken selector/site error than a genuinely empty
-            # source, and we don't want that to wipe out everything as "sold".
-            if seen_external_ids:
+            # Gate on the raw sweep actually returning something, not on
+            # whether any of it matched our target vehicles — a source can
+            # legitimately have zero matching listings on a given day (its
+            # whole tracked lot rotated out), and that's still real signal
+            # that any previously-active listing for it is gone. An empty
+            # raw sweep, on the other hand, is more likely a broken
+            # selector/site error, and shouldn't wipe out everything.
+            if raw_listings:
                 delisted = (
                     self.db.query(Listing)
                     .filter(
