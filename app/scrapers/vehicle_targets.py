@@ -12,58 +12,29 @@ import re
 MAX_DISCOVERY_PRICE_GBP = 30_000
 MAX_DISCOVERY_MILEAGE_MILES = 100_000
 
-# Order matters: more specific keys must come before substrings they contain
-# (e.g. "alpina" before "bmw", since Alpina titles often also say "BMW").
+# Order matters: more specific keys must come before substrings they contain.
 MAKE_MAP: dict[str, str] = {
-    "alpina": "Alpina",
-    "aston martin": "Aston Martin",
     "porsche": "Porsche",
-    "audi": "Audi",
     "bmw": "BMW",
-    "volvo": "Volvo",
     "mercedes-benz": "Mercedes-Benz",
     "mercedes": "Mercedes-Benz",
     "tvr": "TVR",
 }
 
-# Model patterns are only tried for the make they're keyed under, since
-# tokens like "b3"/"d3" are too generic to safely match against any title.
+# Model patterns are only tried for the make they're keyed under.
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {
     "Porsche": [
         # Only 996 Turbo and 996 Carrera 4S — no other 996 trims, no 997 at all.
         (r"(?=.*\b996\b)(?=.*turbo)", "911 996 Turbo"),
         (r"(?=.*\b996\b)(?=.*(carrera\s*4s|c4s\b))", "911 996 Carrera 4S"),
     ],
-    "Audi": [
-        (r"\brs\s*4\b", "RS4"),
-        (r"\brs\s*6\b", "RS6"),
-    ],
-    "Alpina": [
-        (r"\bb3\b", "B3"),
-        (r"\bb5\b", "B5"),
-        (r"\bb6\b", "B6"),
-        (r"\bb10\b", "B10"),
-        (r"\bd3\b", "D3"),
-    ],
     "BMW": [
         (r"\bz3\s*m\b", "Z3 M"),
         (r"\bz4\s*m\b", "Z4 M"),
     ],
-    "Aston Martin": [
-        # Only the DB7 Volante (convertible) — no DB7 coupe, DB9, V8 Vantage, Vanquish.
-        (r"(?=.*\bdb7\b)(?=.*volante)", "DB7 Volante"),
-    ],
-    "Volvo": [
-        (r"850\s*t5-?r", "850 T5-R"),
-        (r"\b850r\b", "850R"),
-        (r"\bs60\s*r\b", "S60 R"),
-        (r"\bv70\s*r\b", "V70 R"),
-    ],
-    "Mercedes-Benz": [
-        (r"e\s*55\s*amg", "E55 AMG"),
-    ],
     "TVR": [
-        (r"\bt350[ct]?\b", "T350"),
+        # Only the T350C (coupe) — excludes the T350T (targa).
+        (r"\bt350\s*c\b", "T350C"),
     ],
 }
 
@@ -108,6 +79,14 @@ def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
         if year_match and 1971 <= int(year_match.group(1)) <= 2001:
             return make, "SL"
 
+    if make == "Mercedes-Benz" and re.search(r"\bsl\s*350\b|\b350\s*sl\b", lowered):
+        # R230 SL350 (3.7L/3.5L V6), 2006 or earlier only. The "350" badge
+        # is also used by the unrelated R107 350SL (a 3.5L V8, 1971-80), so
+        # year-gate to the R230 window to avoid matching that car.
+        year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
+        if year_match and 2001 <= int(year_match.group(1)) <= 2006:
+            return make, "SL"
+
     return make, None
 
 
@@ -119,18 +98,13 @@ def is_target_vehicle(title: str | None) -> bool:
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
     "porsche+911+996+turbo", "porsche+911+996+carrera+4s",
-    "audi+rs4", "audi+rs6",
-    "alpina+b3", "alpina+b5", "alpina+b6", "alpina+b10", "alpina+d3",
     "bmw+z3+m", "bmw+z4+m",
-    "aston+martin+db7+volante",
-    "volvo+850+t5r", "volvo+s60+r", "volvo+v70+r",
-    "mercedes+e55+amg",
-    "mercedes+280sl", "mercedes+300sl", "mercedes+320sl",
-    "tvr+t350",
+    "mercedes+280sl", "mercedes+300sl", "mercedes+320sl", "mercedes+sl350",
+    "tvr+t350c",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
 # relying on is_target_vehicle() as the real filter after fetching.
 SEARCH_MAKES_ONLY = [
-    "Porsche", "Audi", "Alpina", "BMW", "Aston Martin", "Volvo", "Mercedes-Benz", "TVR",
+    "Porsche", "BMW", "Mercedes-Benz", "TVR",
 ]
