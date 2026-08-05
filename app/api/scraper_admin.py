@@ -46,6 +46,7 @@ async def trigger_scrape(source_name: str, db: Session = Depends(get_db)):
         "listings_found": result.listings_found,
         "listings_new": result.listings_new,
         "listings_updated": result.listings_updated,
+        "listings_delisted": result.listings_delisted,
         "errors": result.errors[:5],
     }
 

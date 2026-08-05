@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.crud.listings import upsert_listing
 from app.crud.scrape_runs import create_scrape_run, complete_scrape_run
 from app.crud.sources import get_source_by_name
+from app.db.models.listing import Listing
 from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
 from app.scrapers.vehicle_targets import (
@@ -51,6 +52,7 @@ class ScrapeResult:
     listings_found: int = 0
     listings_new: int = 0
     listings_updated: int = 0
+    listings_delisted: int = 0
     errors: list[str] = field(default_factory=list)
 
 
@@ -88,10 +90,15 @@ class BaseScraper(ABC):
                 raw_listings = await self.scrape_listings(client)
 
             result.listings_found = len(raw_listings)
+            seen_external_ids: set[str] = set()
 
             for raw in raw_listings:
                 if not is_target_vehicle(raw.title):
                     continue
+                # Still live on the source's site as of this scrape — even if
+                # it gets skipped below for exceeding the discovery price/
+                # mileage caps, it hasn't sold, so it shouldn't be delisted.
+                seen_external_ids.add(raw.external_id)
                 if (
                     self.source.source_type == "discovery"
                     and raw.price_gbp is not None
@@ -135,6 +142,24 @@ class BaseScraper(ABC):
                 except Exception as e:
                     logger.error(f"Error upserting listing {raw.external_id}: {e}")
                     result.errors.append(str(e))
+
+            # Only delist against a non-empty sweep — an empty result is more
+            # likely a broken selector/site error than a genuinely empty
+            # source, and we don't want that to wipe out everything as "sold".
+            if seen_external_ids:
+                delisted = (
+                    self.db.query(Listing)
+                    .filter(
+                        Listing.source_id == self.source.id,
+                        Listing.status == "active",
+                        ~Listing.external_id.in_(seen_external_ids),
+                    )
+                    .all()
+                )
+                for listing in delisted:
+                    listing.status = "sold"
+                    listing.sold_at = listing.sold_at or datetime.utcnow()
+                result.listings_delisted = len(delisted)
 
             self.source.last_scraped_at = datetime.utcnow()
             self.db.commit()
