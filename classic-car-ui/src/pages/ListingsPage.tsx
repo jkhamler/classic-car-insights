@@ -72,8 +72,8 @@ export default function ListingsPage() {
         <p className="text-sm text-slate-500">No listings found.</p>
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead className="border-b border-slate-200 bg-slate-50">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-slate-500">Vehicle</th>
@@ -107,7 +107,7 @@ export default function ListingsPage() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
             <span className="text-slate-500">{data.total} results</span>
             <div className="flex gap-2">
               <button
