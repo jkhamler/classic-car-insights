@@ -4,7 +4,8 @@ datacenter range (PistonHeads, 911uk.com) — Railway's scheduled job still
 runs everything else daily; this is only for the blocked ones.
 
 Usage:
-    poetry run python scripts/scrape_to_prod.py pistonheads
+    poetry run python scripts/scrape_to_prod.py              # all blocked sources below
+    poetry run python scripts/scrape_to_prod.py pistonheads  # just one source
 
 Fetches the production DB URL from the Railway CLI (must be logged in and
 linked — `railway status` should show the project) unless DATABASE_URL is
@@ -16,6 +17,10 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Sources confirmed to 403 Railway's datacenter IP (checked via `railway logs`).
+# Add to this list if another source turns out to be blocked the same way.
+IP_BLOCKED_SOURCES = ["pistonheads", "porsche_911uk"]
 
 
 def _prod_database_url() -> str:
@@ -33,9 +38,11 @@ def _prod_database_url() -> str:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: poetry run python scripts/scrape_to_prod.py <source_name>")
+    if len(sys.argv) > 2:
+        print("Usage: poetry run python scripts/scrape_to_prod.py [source_name]")
         sys.exit(1)
+
+    source_names = [sys.argv[1]] if len(sys.argv) == 2 else IP_BLOCKED_SOURCES
 
     # Must set this before importing anything under app/, since app.db.session
     # builds its engine from DATABASE_URL at import time.
@@ -57,7 +64,7 @@ if __name__ == "__main__":
     import app.scrapers.pistonheads  # noqa: F401
     from app.jobs.scrape_jobs import run_scraper
 
-    source_name = sys.argv[1]
-    print(f"Scraping '{source_name}' from this machine, writing to production DB...")
-    asyncio.run(run_scraper(source_name))
+    for source_name in source_names:
+        print(f"Scraping '{source_name}' from this machine, writing to production DB...")
+        asyncio.run(run_scraper(source_name))
     print("Done.")
