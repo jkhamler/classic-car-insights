@@ -63,6 +63,10 @@ def setup_scheduler():
         run_scraper, IntervalTrigger(hours=24),
         args=["gumtree"], id="scrape_gumtree",
     )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["pistonheads"], id="scrape_pistonheads",
+    )
     # Benchmark scrapers — daily
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),

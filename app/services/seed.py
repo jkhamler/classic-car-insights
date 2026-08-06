@@ -128,6 +128,14 @@ SEED_SOURCES = [
         scraper_class="GumtreeScraper",
         scrape_frequency_minutes=360,
     ),
+    SourceCreate(
+        name="pistonheads",
+        display_name="PistonHeads (Private Sellers)",
+        source_type="discovery",
+        base_url="https://www.pistonheads.com",
+        scraper_class="PistonHeadsScraper",
+        scrape_frequency_minutes=360,
+    ),
 ]
 
 

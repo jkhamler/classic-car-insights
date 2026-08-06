@@ -23,6 +23,7 @@ import app.scrapers.porsche_911uk  # noqa: F401
 import app.scrapers.bmw_car_club_gb  # noqa: F401
 import app.scrapers.charterhouse  # noqa: F401
 import app.scrapers.gumtree  # noqa: F401
+import app.scrapers.pistonheads  # noqa: F401
 
 app = FastAPI(title="Classic Car Insights", lifespan=lifespan)
 
