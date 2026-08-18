@@ -33,15 +33,10 @@ BASE_URL = "https://www.pistonheads.com"
 # what we track.
 MODEL_PATHS = [
     "/buy/porsche/911-turbo-996",
-    "/buy/porsche/911-carrera-996",
-    "/buy/bmw/z3m-coupe",
-    "/buy/bmw/z3m-roadster",
     "/buy/bmw/z4m-coupe",
     "/buy/bmw/z4m-roadster",
-    "/buy/mercedes-benz/280sl",
-    "/buy/mercedes-benz/300sl",
-    "/buy/mercedes-benz/350sl",
     "/buy/tvr/t350",
+    "/buy/lotus/elise",
 ]
 
 # Cross-make browse page for current live auctions — a model-scoped /buy/

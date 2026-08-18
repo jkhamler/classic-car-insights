@@ -6,21 +6,19 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Porsche 911 996 — Turbo and Carrera 4S only
-    VehicleCreate(make="Porsche", model="911", generation="996", year_start=1998, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.6L Twin-Turbo Flat-6 (Turbo) / 3.6L Flat-6 (Carrera 4S)"),
+    # Porsche 911 996 Turbo only
+    VehicleCreate(make="Porsche", model="911", generation="996", year_start=1998, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.6L Twin-Turbo Flat-6"),
 
-    # BMW Z3 M / Z4 M
-    VehicleCreate(make="BMW", model="Z3 M", generation="E36/7-8", year_start=1997, year_end=2002, country_of_origin="Germany", segment="sports_car", body_style="coupe/roadster", engine_type="3.2L I6"),
+    # BMW Z4 M
     VehicleCreate(make="BMW", model="Z4 M", generation="E85/E86", year_start=2006, year_end=2008, country_of_origin="Germany", segment="sports_car", body_style="coupe/roadster", engine_type="3.2L I6"),
 
-    # Mercedes-Benz SL — R107/R129 6-cylinder only (280SL/300SL/320SL badges, no V8)
-    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R107", year_start=1971, year_end=1989, country_of_origin="Germany", segment="gt", body_style="convertible", engine_type="2.8L/3.0L I6"),
-    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R129", year_start=1989, year_end=2001, country_of_origin="Germany", segment="gt", body_style="convertible", engine_type="2.8L/3.2L I6/V6"),
-    # Mercedes-Benz SL350 — R230, 2006 or earlier only (pre-facelift), V6
-    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R230", year_start=2001, year_end=2006, country_of_origin="Germany", segment="gt", body_style="convertible", engine_type="3.7L/3.5L V6"),
+    # TVR T350 — both T350C (coupe) and T350T (targa)
+    VehicleCreate(make="TVR", model="T350", generation="T350", year_start=2002, year_end=2006, country_of_origin="UK", segment="sports_car", body_style="coupe/targa", engine_type="3.6L Speed Six I6"),
 
-    # TVR — T350C (coupe) only, T350T (targa) excluded
-    VehicleCreate(make="TVR", model="T350C", generation="T350", year_start=2002, year_end=2006, country_of_origin="UK", segment="sports_car", body_style="coupe", engine_type="3.6L Speed Six I6"),
+    # Lotus Elise — all generations
+    VehicleCreate(make="Lotus", model="Elise", generation="S1", year_start=1996, year_end=2001, country_of_origin="UK", segment="sports_car", body_style="roadster", engine_type="1.8L I4"),
+    VehicleCreate(make="Lotus", model="Elise", generation="S2", year_start=2001, year_end=2011, country_of_origin="UK", segment="sports_car", body_style="roadster", engine_type="1.8L I4"),
+    VehicleCreate(make="Lotus", model="Elise", generation="S3", year_start=2011, year_end=2021, country_of_origin="UK", segment="sports_car", body_style="roadster", engine_type="1.6L/1.8L I4"),
 ]
 
 SEED_SOURCES = [

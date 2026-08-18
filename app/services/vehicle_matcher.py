@@ -4,13 +4,11 @@ from app.db.models.vehicle import Vehicle
 
 ALIASES: dict[str, tuple[str, str, str | None]] = {
     # (normalized_key) -> (make, model, generation)
-    # Porsche 911 996 (Turbo / Carrera 4S only) — extract_make_model() labels
-    # these "911 996 Turbo"/"911 996 Carrera 4S", which doesn't substring-match
-    # the model="911"/generation="996" schema, so they need explicit aliases.
+    # Porsche 911 996 Turbo — extract_make_model() labels this "911 996
+    # Turbo", which doesn't substring-match the model="911"/generation="996"
+    # schema, so it needs an explicit alias.
     "porsche 911 996 turbo": ("Porsche", "911", "996"),
     "porsche 996 turbo": ("Porsche", "911", "996"),
-    "porsche 911 996 carrera 4s": ("Porsche", "911", "996"),
-    "porsche 996 carrera 4s": ("Porsche", "911", "996"),
 }
 
 
