@@ -6,38 +6,15 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Porsche 911 996 Turbo only
-    VehicleCreate(make="Porsche", model="911", generation="996", year_start=1998, year_end=2004, country_of_origin="Germany", segment="sports_car", body_style="coupe", engine_type="3.6L Twin-Turbo Flat-6"),
-
-    # BMW Z4 M
-    VehicleCreate(make="BMW", model="Z4 M", generation="E85/E86", year_start=2006, year_end=2008, country_of_origin="Germany", segment="sports_car", body_style="coupe/roadster", engine_type="3.2L I6"),
-
-    # TVR T350 — both T350C (coupe) and T350T (targa)
-    VehicleCreate(make="TVR", model="T350", generation="T350", year_start=2002, year_end=2006, country_of_origin="UK", segment="sports_car", body_style="coupe/targa", engine_type="3.6L Speed Six I6"),
-
-    # Lotus Elise — all generations
-    VehicleCreate(make="Lotus", model="Elise", generation="S1", year_start=1996, year_end=2001, country_of_origin="UK", segment="sports_car", body_style="roadster", engine_type="1.8L I4"),
-    VehicleCreate(make="Lotus", model="Elise", generation="S2", year_start=2001, year_end=2011, country_of_origin="UK", segment="sports_car", body_style="roadster", engine_type="1.8L I4"),
-    VehicleCreate(make="Lotus", model="Elise", generation="S3", year_start=2011, year_end=2021, country_of_origin="UK", segment="sports_car", body_style="roadster", engine_type="1.6L/1.8L I4"),
+    # Volvo V70 / XC70 — Japanese-import grey imports only, 2.5T five-cylinder
+    # preferred, budget capped at MAX_DISCOVERY_PRICE_GBP (see vehicle_targets.py).
+    VehicleCreate(make="Volvo", model="V70", generation="P2", year_start=2000, year_end=2007, country_of_origin="Sweden", segment="estate", body_style="estate", engine_type="2.5L Turbo I5 (2.5T)"),
+    VehicleCreate(make="Volvo", model="V70", generation="P3", year_start=2007, year_end=2016, country_of_origin="Sweden", segment="estate", body_style="estate", engine_type="2.5L Turbo I5 (2.5T, 2007-2009) / T5 / T6 / D5"),
+    VehicleCreate(make="Volvo", model="XC70", generation="P2", year_start=2000, year_end=2007, country_of_origin="Sweden", segment="estate", body_style="estate (AWD)", engine_type="2.5L Turbo I5 (2.5T)"),
+    VehicleCreate(make="Volvo", model="XC70", generation="P3", year_start=2007, year_end=2016, country_of_origin="Sweden", segment="estate", body_style="estate (AWD)", engine_type="2.5L Turbo I5 (2.5T, 2007-2009) / T5 / T6 / D5"),
 ]
 
 SEED_SOURCES = [
-    SourceCreate(
-        name="bring_a_trailer",
-        display_name="Bring a Trailer",
-        source_type="benchmark",
-        base_url="https://bringatrailer.com",
-        scraper_class="BringATrailerScraper",
-        scrape_frequency_minutes=720,
-    ),
-    SourceCreate(
-        name="bring_a_trailer_uk",
-        display_name="Bring a Trailer (UK)",
-        source_type="benchmark",
-        base_url="https://bringatrailer.com/uk",
-        scraper_class="BringATrailerUKScraper",
-        scrape_frequency_minutes=720,
-    ),
     SourceCreate(
         name="trade_classics",
         display_name="Trade Classics",
@@ -95,22 +72,6 @@ SEED_SOURCES = [
         scrape_frequency_minutes=360,
     ),
     SourceCreate(
-        name="porsche_911uk",
-        display_name="911uk.com Classifieds",
-        source_type="discovery",
-        base_url="https://www.911uk.com",
-        scraper_class="Porsche911UKScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="bmw_car_club_gb",
-        display_name="BMW Car Club GB Classifieds",
-        source_type="discovery",
-        base_url="https://bmwcarclubgb.uk",
-        scraper_class="BMWCarClubGBScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
         name="charterhouse",
         display_name="Charterhouse Auctioneers",
         source_type="discovery",
@@ -128,10 +89,18 @@ SEED_SOURCES = [
     ),
     SourceCreate(
         name="pistonheads",
-        display_name="PistonHeads (Private Sellers)",
+        display_name="PistonHeads",
         source_type="discovery",
         base_url="https://www.pistonheads.com",
         scraper_class="PistonHeadsScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="prestige_automotives",
+        display_name="Prestige Automotives (Japanese Import Specialist)",
+        source_type="discovery",
+        base_url="https://www.prestige-automotives.co.uk",
+        scraper_class="PrestigeAutomotivesScraper",
         scrape_frequency_minutes=360,
     ),
 ]

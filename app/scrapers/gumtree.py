@@ -1,6 +1,7 @@
 """Gumtree scraper — general classifieds, poorly cross-shopped by car dealers
 who focus on specialist sites, which is exactly where cars "fall through
-the cracks"."""
+the cracks". Trade listings are kept (not just private) since Japanese-import
+grey-import specialists are almost always small trade dealers."""
 import logging
 from urllib.parse import urljoin, quote
 
@@ -52,11 +53,6 @@ class GumtreeScraper(BaseScraper):
                 if href in seen_urls:
                     continue
                 seen_urls.add(href)
-
-                seller_type_el = card.select_one('[data-q="motors-seller-type"]')
-                seller_type = clean_text(seller_type_el.get_text()) if seller_type_el else None
-                if seller_type and seller_type.strip().lower() == "trade":
-                    continue  # private sales only, no dealers
 
                 title_el = card.select_one('[data-q="tile-title"]')
                 title = clean_text(title_el.get_text()) if title_el else None

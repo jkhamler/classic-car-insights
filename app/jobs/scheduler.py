@@ -49,14 +49,6 @@ def setup_scheduler():
     )
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),
-        args=["porsche_911uk"], id="scrape_porsche_911uk",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["bmw_car_club_gb"], id="scrape_bmw_car_club_gb",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
         args=["charterhouse"], id="scrape_charterhouse",
     )
     scheduler.add_job(
@@ -67,14 +59,9 @@ def setup_scheduler():
         run_scraper, IntervalTrigger(hours=24),
         args=["pistonheads"], id="scrape_pistonheads",
     )
-    # Benchmark scrapers — daily
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),
-        args=["bring_a_trailer"], id="scrape_bat",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["bring_a_trailer_uk"], id="scrape_bat_uk",
+        args=["prestige_automotives"], id="scrape_prestige_automotives",
     )
     # Nightly re-scoring at 3 AM
     scheduler.add_job(

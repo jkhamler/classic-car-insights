@@ -1,4 +1,6 @@
-"""PistonHeads scraper — classifieds + auctions, private sellers only.
+"""PistonHeads scraper — classifieds + auctions, private and trade sellers.
+Japanese-import grey-import specialists are almost always trade dealers, so
+trade listings are kept rather than filtered out.
 
 PistonHeads migrated its classifieds to a JS-rendered Next.js app, which is
 why the old CSS-selector scraper silently returned 0 results. But the
@@ -28,15 +30,13 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.pistonheads.com"
 
-# PistonHeads' own taxonomy splits generations/trims finely enough to target
-# directly, cutting an otherwise-enormous "all Porsche" sweep down to just
-# what we track.
+# PistonHeads' own taxonomy splits by model, cutting an otherwise-enormous
+# "all Volvo" sweep down to just what we track. It doesn't split further by
+# generation or engine, so extract_make_model()'s title matching plus the
+# Japanese-import keyword gate do the real narrowing after fetching.
 MODEL_PATHS = [
-    "/buy/porsche/911-turbo-996",
-    "/buy/bmw/z4m-coupe",
-    "/buy/bmw/z4m-roadster",
-    "/buy/tvr/t350",
-    "/buy/lotus/elise",
+    "/buy/volvo/v70",
+    "/buy/volvo/xc70",
 ]
 
 # Cross-make browse page for current live auctions — a model-scoped /buy/
@@ -61,7 +61,7 @@ class PistonHeadsScraper(BaseScraper):
                 html = await self.fetch_with_rate_limit(client, urljoin(BASE_URL, path))
                 listings = self._parse_page(html, seen_ids)
                 all_listings.extend(listings)
-                logger.info(f"[PistonHeads] {path}: found {len(listings)} private listings")
+                logger.info(f"[PistonHeads] {path}: found {len(listings)} listings")
             except Exception as e:
                 logger.error(f"[PistonHeads] Failed to scrape {path}: {e}")
 
@@ -88,8 +88,6 @@ class PistonHeadsScraper(BaseScraper):
 
             seller_ref = (obj.get("seller") or {}).get("__ref")
             seller = apollo.get(seller_ref, {}) if seller_ref else {}
-            if seller.get("sellerType") != "Private":
-                continue  # dealers/trade excluded — private sellers only
 
             title = obj.get("headline")
             make, model = extract_make_model(title)

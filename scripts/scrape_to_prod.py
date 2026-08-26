@@ -1,7 +1,7 @@
 """Run one scraper from this machine and write straight into the production
 (Railway) database, bypassing Railway's own IP for sources that block its
-datacenter range (PistonHeads, 911uk.com) — Railway's scheduled job still
-runs everything else daily; this is only for the blocked ones.
+datacenter range (PistonHeads) — Railway's scheduled job still runs
+everything else daily; this is only for the blocked ones.
 
 Usage:
     poetry run python scripts/scrape_to_prod.py              # all blocked sources below
@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # Sources confirmed to 403 Railway's datacenter IP (checked via `railway logs`).
 # Add to this list if another source turns out to be blocked the same way.
-IP_BLOCKED_SOURCES = ["pistonheads", "porsche_911uk"]
+IP_BLOCKED_SOURCES = ["pistonheads"]
 
 
 def _prod_database_url() -> str:
@@ -49,7 +49,6 @@ if __name__ == "__main__":
     os.environ["DATABASE_URL"] = _prod_database_url()
 
     import asyncio
-    import app.scrapers.bring_a_trailer  # noqa: F401
     import app.scrapers.trade_classics  # noqa: F401
     import app.scrapers.hampson_marketplace  # noqa: F401
     import app.scrapers.mathewsons  # noqa: F401
@@ -57,8 +56,6 @@ if __name__ == "__main__":
     import app.scrapers.anglia_car_auctions  # noqa: F401
     import app.scrapers.morris_leslie  # noqa: F401
     import app.scrapers.manor_park  # noqa: F401
-    import app.scrapers.porsche_911uk  # noqa: F401
-    import app.scrapers.bmw_car_club_gb  # noqa: F401
     import app.scrapers.charterhouse  # noqa: F401
     import app.scrapers.gumtree  # noqa: F401
     import app.scrapers.pistonheads  # noqa: F401
