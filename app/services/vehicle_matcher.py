@@ -4,8 +4,12 @@ from app.db.models.vehicle import Vehicle
 
 ALIASES: dict[str, tuple[str, str, str | None]] = {
     # (normalized_key) -> (make, model, generation)
-    # extract_make_model() labels both as "V70"/"XC70", which substring-match
-    # the model column fine on their own — no aliases currently needed.
+    # extract_make_model() labels this "SL (R107)", which doesn't substring-
+    # match model="SL"/generation="R107" either way. Keys are pre-normalized
+    # (_normalize() turns "-" into " ") since alias lookup checks the raw key
+    # against the already-normalized search string, not the other way round.
+    "mercedes benz sl (r107)": ("Mercedes-Benz", "SL", "R107"),
+    "mercedes sl (r107)": ("Mercedes-Benz", "SL", "R107"),
 }
 
 

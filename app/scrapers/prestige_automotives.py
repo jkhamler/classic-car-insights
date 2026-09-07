@@ -1,9 +1,6 @@
 """Prestige Automotives scraper — a BIMTA-accredited specialist importer
-(West Midlands), not a general classifieds site. Its whole stock is Japanese-
-market grey imports, which is exactly the supply the generic sites (Gumtree,
-PistonHeads, AutoTrader) rarely carry — extract_make_model() + the
-Japanese-import keyword gate still apply, but most of this dealer's own
-listing copy already states "JAPANESE IMPORT" / "BIMTA" outright.
+(West Midlands). General car dealer stock list, filtered the same way as
+every other source via extract_make_model()/is_target_vehicle().
 """
 import logging
 import re
@@ -84,15 +81,8 @@ class PrestigeAutomotivesScraper(BaseScraper):
 
                 make, model = extract_make_model(title)
 
-                # Listing headlines here are spec strings, not sales copy, so
-                # they rarely say "Japanese import" outright even though (per
-                # the dealer's own "why imported cars" page) most of its
-                # stock is — annotate every listing accordingly so the
-                # shared is_target_vehicle() gate doesn't drop real matches.
                 blurb_el = card.select_one(".text-info-inner p")
-                blurb = clean_text(blurb_el.get_text()) if blurb_el else None
-                description = f"{blurb} " if blurb else ""
-                description += "Japanese import — sourced via BIMTA-accredited specialist importer."
+                description = clean_text(blurb_el.get_text()) if blurb_el else None
 
                 img_el = card.select_one("img[src]")
                 image_urls = [img_el["src"]] if img_el and img_el.get("src") else []

@@ -93,7 +93,7 @@ class BaseScraper(ABC):
             seen_external_ids: set[str] = set()
 
             for raw in raw_listings:
-                if not is_target_vehicle(raw.title, raw.description):
+                if not is_target_vehicle(raw.title):
                     continue
                 # Still live on the source's site as of this scrape — even if
                 # it gets skipped below for exceeding the discovery price/
@@ -101,11 +101,16 @@ class BaseScraper(ABC):
                 seen_external_ids.add(raw.external_id)
                 if (
                     self.source.source_type == "discovery"
+                    and MAX_DISCOVERY_PRICE_GBP is not None
                     and raw.price_gbp is not None
                     and raw.price_gbp > MAX_DISCOVERY_PRICE_GBP
                 ):
                     continue
-                if self.source.source_type == "discovery" and raw.mileage is not None:
+                if (
+                    self.source.source_type == "discovery"
+                    and MAX_DISCOVERY_MILEAGE_MILES is not None
+                    and raw.mileage is not None
+                ):
                     mileage_miles = raw.mileage * 0.621371 if raw.mileage_unit == "km" else raw.mileage
                     if mileage_miles > MAX_DISCOVERY_MILEAGE_MILES:
                         continue

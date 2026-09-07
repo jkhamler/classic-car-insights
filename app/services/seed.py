@@ -6,12 +6,10 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Volvo V70 / XC70 — Japanese-import grey imports only, 2.5T five-cylinder
-    # preferred, budget capped at MAX_DISCOVERY_PRICE_GBP (see vehicle_targets.py).
-    VehicleCreate(make="Volvo", model="V70", generation="P2", year_start=2000, year_end=2007, country_of_origin="Sweden", segment="estate", body_style="estate", engine_type="2.5L Turbo I5 (2.5T)"),
-    VehicleCreate(make="Volvo", model="V70", generation="P3", year_start=2007, year_end=2016, country_of_origin="Sweden", segment="estate", body_style="estate", engine_type="2.5L Turbo I5 (2.5T, 2007-2009) / T5 / T6 / D5"),
-    VehicleCreate(make="Volvo", model="XC70", generation="P2", year_start=2000, year_end=2007, country_of_origin="Sweden", segment="estate", body_style="estate (AWD)", engine_type="2.5L Turbo I5 (2.5T)"),
-    VehicleCreate(make="Volvo", model="XC70", generation="P3", year_start=2007, year_end=2016, country_of_origin="Sweden", segment="estate", body_style="estate (AWD)", engine_type="2.5L Turbo I5 (2.5T, 2007-2009) / T5 / T6 / D5"),
+    # Mercedes-Benz SL-Class R107 — 1986-1989 build years only (see
+    # vehicle_targets.py for why: only badges still in production in that
+    # window are tracked). No price/mileage ceiling set for this hunt.
+    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R107", year_start=1986, year_end=1989, country_of_origin="Germany", segment="convertible", body_style="roadster", engine_type="I6/V8 (3.0L-5.6L)"),
 ]
 
 SEED_SOURCES = [

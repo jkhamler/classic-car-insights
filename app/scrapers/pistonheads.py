@@ -1,6 +1,4 @@
 """PistonHeads scraper — classifieds + auctions, private and trade sellers.
-Japanese-import grey-import specialists are almost always trade dealers, so
-trade listings are kept rather than filtered out.
 
 PistonHeads migrated its classifieds to a JS-rendered Next.js app, which is
 why the old CSS-selector scraper silently returned 0 results. But the
@@ -30,13 +28,12 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.pistonheads.com"
 
-# PistonHeads' own taxonomy splits by model, cutting an otherwise-enormous
-# "all Volvo" sweep down to just what we track. It doesn't split further by
-# generation or engine, so extract_make_model()'s title matching plus the
-# Japanese-import keyword gate do the real narrowing after fetching.
+# PistonHeads doesn't have a dedicated classic-SL/R107 path — /buy/mercedes-
+# benz/sl covers every SL generation (R107 through R232), skewed toward
+# modern stock. extract_make_model()'s badge + year-gate does the real
+# narrowing down to R107 1986+ after fetching.
 MODEL_PATHS = [
-    "/buy/volvo/v70",
-    "/buy/volvo/xc70",
+    "/buy/mercedes-benz/sl",
 ]
 
 # Cross-make browse page for current live auctions — a model-scoped /buy/
