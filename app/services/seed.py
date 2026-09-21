@@ -120,6 +120,22 @@ SEED_SOURCES = [
         scraper_class="PrestigeAutomotivesScraper",
         scrape_frequency_minutes=360,
     ),
+    SourceCreate(
+        name="amoc",
+        display_name="Aston Martin Owners Club Classifieds",
+        source_type="discovery",
+        base_url="https://amoc.org",
+        scraper_class="AMOCScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="nicholas_mee",
+        display_name="Nicholas Mee & Co (Aston Martin Specialist)",
+        source_type="discovery",
+        base_url="https://www.nicholasmee.co.uk",
+        scraper_class="NicholasMeeScraper",
+        scrape_frequency_minutes=360,
+    ),
 ]
 
 
