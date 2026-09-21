@@ -8,7 +8,9 @@ import { formatPrice } from '../components/common/formatPrice';
 export default function ListingsPage() {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
-  const [minScore, setMinScore] = useState('');
+  // Defaults to "gems only" — anything meaningfully cheaper than its
+  // current peer set, not just everything within budget. Clearable.
+  const [minScore, setMinScore] = useState('50');
   const [sortBy, setSortBy] = useState('score');
   const [page, setPage] = useState(1);
 
