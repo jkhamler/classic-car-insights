@@ -4,9 +4,11 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Currently narrowed to a single hunt: Mercedes-Benz R107 (SL-Class roadster,
-1971-1989), model years 1986 onwards only. No price or mileage ceiling is
-set — no budget was given for this hunt.
+Two hunts currently tracked:
+  - Mercedes-Benz R107 (SL-Class roadster, 1971-1989), model years 1986
+    onwards only.
+  - Aston Martin DB9 (2004-2016), all model years — coupe and Volante.
+No price or mileage ceiling is set on either — no budget given.
 """
 import re
 
@@ -21,6 +23,8 @@ MAX_DISCOVERY_MILEAGE_MILES: float | None = None
 MAKE_MAP: dict[str, str] = {
     "mercedes-benz": "Mercedes-Benz",
     "mercedes": "Mercedes-Benz",
+    "aston martin": "Aston Martin",
+    "aston-martin": "Aston Martin",
 }
 
 # R107 badges in "<number>SL" order (500SL, 560SL, ...) — the R129/R230/R231
@@ -38,6 +42,10 @@ R107_BADGE_RE = re.compile(r"\b(300|420|500|560)\s*sl\b")
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {
     "Mercedes-Benz": [
         (r"\br\s*-?\s*107\b", "SL (R107)"),
+    ],
+    "Aston Martin": [
+        # Matches "DB9" and "DB9 Volante"/"DB9 GT" alike.
+        (r"\bdb\s*-?\s*9\b", "DB9"),
     ],
 }
 
@@ -89,10 +97,12 @@ SEARCH_TERMS = [
     "mercedes+500sl",
     "mercedes+560sl",
     "mercedes+r107",
+    "aston+martin+db9",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
 # relying on is_target_vehicle() as the real filter after fetching.
 SEARCH_MAKES_ONLY = [
     "Mercedes-Benz",
+    "Aston Martin",
 ]

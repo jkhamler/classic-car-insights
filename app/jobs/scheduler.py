@@ -18,6 +18,15 @@ scheduler = AsyncIOScheduler()
 
 
 def setup_scheduler():
+    # Benchmark scraper — daily, staggered
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["bring_a_trailer"], id="scrape_bring_a_trailer",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["bring_a_trailer_uk"], id="scrape_bring_a_trailer_uk",
+    )
     # Discovery scrapers — daily, staggered
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),

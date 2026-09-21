@@ -10,9 +10,28 @@ SEED_VEHICLES = [
     # vehicle_targets.py for why: only badges still in production in that
     # window are tracked). No price/mileage ceiling set for this hunt.
     VehicleCreate(make="Mercedes-Benz", model="SL", generation="R107", year_start=1986, year_end=1989, country_of_origin="Germany", segment="convertible", body_style="roadster", engine_type="I6/V8 (3.0L-5.6L)"),
+    # Aston Martin DB9 — full production run, coupe and Volante convertible.
+    # No price/mileage ceiling set for this hunt.
+    VehicleCreate(make="Aston Martin", model="DB9", year_start=2004, year_end=2016, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="V12 (5.9L)"),
 ]
 
 SEED_SOURCES = [
+    SourceCreate(
+        name="bring_a_trailer",
+        display_name="Bring a Trailer (UK)",
+        source_type="benchmark",
+        base_url="https://bringatrailer.com",
+        scraper_class="BringATrailerScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="bring_a_trailer_uk",
+        display_name="Bring a Trailer (UK Hub)",
+        source_type="benchmark",
+        base_url="https://bringatrailer.com/uk",
+        scraper_class="BringATrailerUKScraper",
+        scrape_frequency_minutes=360,
+    ),
     SourceCreate(
         name="trade_classics",
         display_name="Trade Classics",
