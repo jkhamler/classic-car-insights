@@ -50,9 +50,15 @@ class AutoTraderScraper(BaseScraper):
     async def scrape_listings(self, client) -> list[RawListing]:
         all_listings: list[RawListing] = []
         seen_ids: set[str] = set()
+        fetch_errors: list[str] = []
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch()
+            # --no-sandbox/--disable-dev-shm-usage: Chromium's default
+            # sandbox needs kernel privileges most containers don't grant —
+            # without these it can fail on every page load rather than at
+            # launch, which otherwise silently produces zero results instead
+            # of a clear error.
+            browser = await p.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
             try:
                 page = await browser.new_page(user_agent=self.user_agent)
                 for make, model in SEARCHES:
@@ -67,7 +73,9 @@ class AutoTraderScraper(BaseScraper):
                             await page.wait_for_timeout(1500)
                             html = await page.content()
                         except Exception as e:
-                            logger.error(f"[AutoTrader] {make} {model} page={page_num}: fetch failed: {e}")
+                            msg = f"{make} {model} page={page_num}: fetch failed: {e}"
+                            logger.error(f"[AutoTrader] {msg}")
+                            fetch_errors.append(msg)
                             break
 
                         cards = self._parse_page(html, seen_ids)
@@ -79,6 +87,13 @@ class AutoTraderScraper(BaseScraper):
                             break
             finally:
                 await browser.close()
+
+        # Every search's very first page failing, with nothing at all
+        # found, is much more likely a broken browser/navigation than a
+        # genuine zero-result day — raise so it surfaces as a failed
+        # scrape_run instead of silently recording "0 found, success".
+        if not all_listings and len(fetch_errors) >= len(SEARCHES):
+            raise RuntimeError(f"AutoTrader: every search failed to load; first error: {fetch_errors[0]}")
 
         return all_listings
 
