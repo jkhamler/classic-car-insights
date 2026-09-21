@@ -15,7 +15,7 @@ from app.db.models.listing import Listing
 from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
 from app.scrapers.vehicle_targets import (
-    is_target_vehicle, MAX_DISCOVERY_PRICE_GBP, MAX_DISCOVERY_MILEAGE_MILES,
+    is_target_vehicle, MAX_DISCOVERY_MILEAGE_MILES, discovery_price_ceiling,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,13 +99,10 @@ class BaseScraper(ABC):
                 # it gets skipped below for exceeding the discovery price/
                 # mileage caps, it hasn't sold, so it shouldn't be delisted.
                 seen_external_ids.add(raw.external_id)
-                if (
-                    self.source.source_type == "discovery"
-                    and MAX_DISCOVERY_PRICE_GBP is not None
-                    and raw.price_gbp is not None
-                    and raw.price_gbp > MAX_DISCOVERY_PRICE_GBP
-                ):
-                    continue
+                if self.source.source_type == "discovery" and raw.price_gbp is not None:
+                    ceiling = discovery_price_ceiling(raw.make, raw.model)
+                    if ceiling is not None and raw.price_gbp > ceiling:
+                        continue
                 if (
                     self.source.source_type == "discovery"
                     and MAX_DISCOVERY_MILEAGE_MILES is not None

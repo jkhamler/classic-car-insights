@@ -6,18 +6,30 @@ models" filter, applied uniformly regardless of source.
 
 Two hunts currently tracked:
   - Mercedes-Benz R107 (SL-Class roadster, 1971-1989), model years 1986
-    onwards only.
+    onwards only. No budget given — uncapped.
   - Aston Martin DB9 (2004-2016), all model years — coupe and Volante.
-No price or mileage ceiling is set on either — no budget given.
+    DB9 is the current top search, capped at £35k discovery price.
 """
 import re
 
-# Ceilings applied to discovery listings only (not benchmark sources, which
-# need full-range sold prices/mileages to compute an accurate fair-value
-# baseline across the whole market, not just what the buyer wants to see).
-# None = no ceiling; set to a number to cap discovery listings again.
-MAX_DISCOVERY_PRICE_GBP: float | None = None
+# Per-(make, model-label) discovery price ceilings — not applied to
+# benchmark sources, which need full-range sold prices to compute an
+# accurate fair-value baseline across the whole market, not just what the
+# buyer wants to see. Keyed by the exact (make, model) label pair
+# extract_make_model() returns below. Omit a vehicle here for no ceiling.
+DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
+    ("Aston Martin", "DB9"): 35000,
+}
+
+# Mileage ceiling — global (not per-vehicle, unlike price) since no hunt
+# has needed one differentiated by vehicle yet. None = no ceiling.
 MAX_DISCOVERY_MILEAGE_MILES: float | None = None
+
+
+def discovery_price_ceiling(make: str | None, model: str | None) -> float | None:
+    if not make or not model:
+        return None
+    return DISCOVERY_PRICE_CEILINGS_GBP.get((make, model))
 
 # Order matters: more specific keys must come before substrings they contain.
 MAKE_MAP: dict[str, str] = {
