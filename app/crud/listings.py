@@ -1,16 +1,12 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, case
+from sqlalchemy import desc
 from app.db.models.listing import Listing
 from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
 
-# Private sellers take preference over trade/dealer listings — private
-# sorts first, then unknown (null), then trade last.
-_SELLER_TYPE_PRIORITY = case(
-    (Listing.seller_type == "private", 0),
-    (Listing.seller_type.is_(None), 1),
-    else_=2,
-)
+# Private sales only — trade/dealer stock and listings we can't identify
+# the seller type for are excluded outright, not just deprioritized.
+PRIVATE_ONLY = Listing.seller_type == "private"
 
 
 def get_listings(
@@ -29,7 +25,7 @@ def get_listings(
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[list[Listing], int]:
-    q = db.query(Listing)
+    q = db.query(Listing).filter(PRIVATE_ONLY)
 
     if status:
         q = q.filter(Listing.status == status)
@@ -53,15 +49,15 @@ def get_listings(
     total = q.count()
 
     if sort_by == "score":
-        q = q.order_by(_SELLER_TYPE_PRIORITY, desc(Listing.undervaluation_score).nulls_last())
+        q = q.order_by(desc(Listing.undervaluation_score).nulls_last())
     elif sort_by == "price_asc":
-        q = q.order_by(_SELLER_TYPE_PRIORITY, Listing.price_gbp.asc().nulls_last())
+        q = q.order_by(Listing.price_gbp.asc().nulls_last())
     elif sort_by == "price_desc":
-        q = q.order_by(_SELLER_TYPE_PRIORITY, Listing.price_gbp.desc().nulls_last())
+        q = q.order_by(Listing.price_gbp.desc().nulls_last())
     elif sort_by == "date":
-        q = q.order_by(_SELLER_TYPE_PRIORITY, desc(Listing.scraped_at))
+        q = q.order_by(desc(Listing.scraped_at))
     else:
-        q = q.order_by(_SELLER_TYPE_PRIORITY, desc(Listing.undervaluation_score).nulls_last())
+        q = q.order_by(desc(Listing.undervaluation_score).nulls_last())
 
     items = q.offset((page - 1) * per_page).limit(per_page).all()
     return items, total
@@ -112,6 +108,7 @@ def get_top_opportunities(
     max_price_gbp: float | None = None,
 ) -> list[Listing]:
     q = db.query(Listing).filter(
+        PRIVATE_ONLY,
         Listing.status == "active",
         Listing.undervaluation_score.isnot(None),
     )
@@ -121,11 +118,12 @@ def get_top_opportunities(
         q = q.filter(Listing.undervaluation_score > min_score)
     if max_price_gbp is not None:
         q = q.filter(Listing.price_gbp < max_price_gbp)
-    return q.order_by(_SELLER_TYPE_PRIORITY, desc(Listing.undervaluation_score)).limit(limit).all()
+    return q.order_by(desc(Listing.undervaluation_score)).limit(limit).all()
 
 
 def count_active_for_vehicle(db: Session, vehicle_id: int) -> int:
     return db.query(Listing).filter(
+        PRIVATE_ONLY,
         Listing.vehicle_id == vehicle_id,
         Listing.status == "active",
     ).count()
