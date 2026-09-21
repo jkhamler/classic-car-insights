@@ -27,13 +27,7 @@ class BidpathScraper(BaseScraper):
     rate_limit_seconds = 2.5
 
     async def scrape_listings(self, client: httpx.AsyncClient) -> list[RawListing]:
-        try:
-            home_html = await self.fetch_with_rate_limit(client, f"{self.base_url}/")
-        except Exception as e:
-            logger.error(f"[{self.source_name}] Failed to fetch homepage: {e}")
-            return []
-
-        auction_ids = self._extract_current_auction_ids(home_html)
+        auction_ids = await self._fetch_current_auction_ids(client)
         logger.info(f"[{self.source_name}] current auctions: {auction_ids}")
 
         all_listings: list[RawListing] = []
@@ -57,10 +51,35 @@ class BidpathScraper(BaseScraper):
 
         return all_listings
 
-    def _extract_current_auction_ids(self, html: str) -> list[str]:
-        # Only auctions linked from the homepage are current/upcoming — a
-        # blank `au=` search hits Bidpath's entire historical archive,
-        # including long-past sales whose unsold lots never get tagged SOLD.
+    async def _fetch_current_auction_ids(self, client: httpx.AsyncClient) -> list[str]:
+        # /upcoming-auctions is a dedicated listing of genuinely open/
+        # upcoming sales — prefer it over the homepage, which mixes in
+        # promo carousel slides for the most recently *closed* auction
+        # (a "VIEW RESULTS" button, same au= id) and can even leave stale
+        # au= links pointing at a closed auction under a "next auction"
+        # heading (confirmed live on Historics: a lot from a sale that
+        # ended over a week earlier was still being surfaced as active
+        # because its au= id was still reachable from the homepage, even
+        # though the lot itself was never tagged SOLD/WITHDRAWN).
+        try:
+            html = await self.fetch_with_rate_limit(client, f"{self.base_url}/upcoming-auctions")
+            ids = self._extract_auction_ids(html)
+            if ids:
+                return ids
+        except Exception as e:
+            logger.warning(f"[{self.source_name}] /upcoming-auctions fetch failed, falling back to homepage: {e}")
+
+        # Fallback for sites where /upcoming-auctions is gated (Mathewsons
+        # serves a JS proof-of-work challenge there, no au= ids in the
+        # response) — less reliable, but matches prior behavior.
+        try:
+            home_html = await self.fetch_with_rate_limit(client, f"{self.base_url}/")
+        except Exception as e:
+            logger.error(f"[{self.source_name}] Failed to fetch homepage: {e}")
+            return []
+        return self._extract_auction_ids(home_html)
+
+    def _extract_auction_ids(self, html: str) -> list[str]:
         ids = re.findall(r"\bau=(\d+)", html)
         seen = []
         for i in ids:
