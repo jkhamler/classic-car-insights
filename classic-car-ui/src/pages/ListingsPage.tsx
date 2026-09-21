@@ -92,6 +92,11 @@ export default function ListingsPage() {
                         {l.title.length > 60 ? l.title.slice(0, 60) + '...' : l.title}
                         <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                       </a>
+                      {l.seller_type === 'private' && (
+                        <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700">
+                          Private
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 font-semibold">{formatPrice(l.price_gbp)}</td>
                     <td className="px-4 py-3 text-slate-500">{l.year ?? '—'}</td>

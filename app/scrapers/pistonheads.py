@@ -129,6 +129,7 @@ class PistonHeadsScraper(BaseScraper):
                 mileage_unit="miles",
                 transmission=spec.get("transmissionType"),
                 color=spec.get("colour"),
+                seller_type=self._seller_type(seller.get("sellerType")),
                 location=seller.get("location"),
                 image_urls=obj.get("fullSizeImageUrls") or [],
                 auction_end_at=self._parse_iso(auction.get("endDateTime")) if is_auction else None,
@@ -144,3 +145,9 @@ class PistonHeadsScraper(BaseScraper):
             return datetime.fromisoformat(value.replace("Z", "+00:00"))
         except ValueError:
             return None
+
+    @staticmethod
+    def _seller_type(raw: str | None) -> str | None:
+        if not raw:
+            return None
+        return "private" if raw.lower() == "private" else "trade"

@@ -102,6 +102,7 @@ class PrestigeAutomotivesScraper(BaseScraper):
                     mileage_unit="miles",
                     transmission=transmission,
                     color=color,
+                    seller_type="trade",  # BIMTA-accredited specialist dealer stock
                     description=description,
                     image_urls=image_urls,
                 ))

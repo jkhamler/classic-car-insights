@@ -12,6 +12,9 @@ WORKDIR /app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+# Chromium + its OS-level deps, for the AutoTrader scraper (the one source
+# whose results only exist after client-side JS runs).
+RUN playwright install --with-deps chromium
 
 COPY app/ ./app/
 COPY alembic/ ./alembic/

@@ -36,6 +36,7 @@ class Listing(Base):
     vin = Column(String(50), nullable=True)
     color = Column(String(100), nullable=True)
     transmission = Column(String(50), nullable=True)
+    seller_type = Column(String(20), nullable=True)  # "private" | "trade" | null (unknown)
     location = Column(String(200), nullable=True)
     description = Column(Text, nullable=True)
     image_urls = Column(JSON, nullable=True)

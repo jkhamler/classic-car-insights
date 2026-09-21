@@ -104,6 +104,7 @@ class NicholasMeeScraper(BaseScraper):
                         mileage=mileage,
                         mileage_unit="miles",
                         color=car.get("color"),
+                        seller_type="trade",  # specialist dealer stock
                         description=description,
                     ))
                 except Exception as e:

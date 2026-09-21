@@ -136,6 +136,14 @@ SEED_SOURCES = [
         scraper_class="NicholasMeeScraper",
         scrape_frequency_minutes=360,
     ),
+    SourceCreate(
+        name="autotrader",
+        display_name="AutoTrader UK",
+        source_type="discovery",
+        base_url="https://www.autotrader.co.uk",
+        scraper_class="AutoTraderScraper",
+        scrape_frequency_minutes=360,
+    ),
 ]
 
 

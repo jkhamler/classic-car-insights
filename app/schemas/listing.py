@@ -25,6 +25,7 @@ class ListingBase(BaseModel):
     currency: str = "GBP"
     mileage: int | None = None
     transmission: str | None = None
+    seller_type: str | None = None
     location: str | None = None
 
 
@@ -76,6 +77,7 @@ class ListingSummary(BaseModel):
     price_gbp: float | None = None
     currency: str = "GBP"
     location: str | None = None
+    seller_type: str | None = None
     source_name: str | None = None
     undervaluation_score: float | None = None
     status: str = "active"

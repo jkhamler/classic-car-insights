@@ -9,6 +9,7 @@ export interface ListingSummary {
   price_gbp: number | null;
   currency: string;
   location: string | null;
+  seller_type: string | null;
   source_name: string | null;
   undervaluation_score: number | null;
   status: string;

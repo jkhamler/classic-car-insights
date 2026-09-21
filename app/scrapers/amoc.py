@@ -97,6 +97,7 @@ class AMOCScraper(BaseScraper):
                     asking_price=price,
                     currency="GBP",
                     price_gbp=price,
+                    seller_type="private",  # member-to-member club classifieds
                     description=description,
                     image_urls=image_urls,
                 ))

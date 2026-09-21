@@ -39,6 +39,7 @@ class RawListing:
     vin: str | None = None
     color: str | None = None
     transmission: str | None = None
+    seller_type: str | None = None  # "private" | "trade" | None (unknown)
     location: str | None = None
     description: str | None = None
     image_urls: list[str] = field(default_factory=list)
@@ -130,6 +131,7 @@ class BaseScraper(ABC):
                         vin=raw.vin,
                         color=raw.color,
                         transmission=raw.transmission,
+                        seller_type=raw.seller_type,
                         location=raw.location,
                         description=raw.description,
                         image_urls=raw.image_urls or None,
