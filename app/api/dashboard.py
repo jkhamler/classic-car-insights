@@ -29,6 +29,7 @@ def _listing_to_summary(listing: Listing, db: Session) -> ListingSummary:
         price_gbp=listing.price_gbp,
         currency=listing.currency,
         location=listing.location,
+        seller_type=listing.seller_type,
         source_name=source.display_name if source else None,
         undervaluation_score=listing.undervaluation_score,
         status=listing.status,
