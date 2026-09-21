@@ -4,6 +4,7 @@ from app.db.models.vehicle import Vehicle
 from app.db.models.listing import Listing
 from app.db.models.price_benchmark import PriceBenchmark
 from app.schemas.vehicle import VehicleCreate
+from app.crud.listings import PRIVATE_ONLY
 
 
 def get_vehicles(db: Session, skip: int = 0, limit: int = 50) -> list[Vehicle]:
@@ -34,7 +35,7 @@ def get_vehicle_summaries(db: Session, skip: int = 0, limit: int = 50) -> list[d
     results = []
     for v in vehicles:
         active_count = db.query(sql_func.count(Listing.id)).filter(
-            Listing.vehicle_id == v.id, Listing.status == "active"
+            PRIVATE_ONLY, Listing.vehicle_id == v.id, Listing.status == "active"
         ).scalar()
         latest_benchmark = db.query(PriceBenchmark).filter(
             PriceBenchmark.vehicle_id == v.id

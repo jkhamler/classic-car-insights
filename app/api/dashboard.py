@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.db.models.listing import Listing
 from app.db.models.vehicle import Vehicle
 from app.db.models.source import Source
-from app.crud.listings import get_top_opportunities
+from app.crud.listings import get_top_opportunities, PRIVATE_ONLY
 from app.crud.alerts import count_active_alerts
 from app.schemas.dashboard import DashboardStats, DashboardResponse, MarketMover
 from app.schemas.listing import ListingSummary
@@ -52,11 +52,14 @@ def top_opportunities(
 
 @router.get("/stats", response_model=DashboardStats)
 def dashboard_stats(db: Session = Depends(get_db)):
-    total_listings = db.query(sql_func.count(Listing.id)).filter(Listing.status == "active").scalar()
+    total_listings = db.query(sql_func.count(Listing.id)).filter(
+        PRIVATE_ONLY, Listing.status == "active"
+    ).scalar()
     total_vehicles = db.query(sql_func.count(Vehicle.id)).scalar()
 
     week_ago = datetime.utcnow() - timedelta(days=7)
     opportunities = db.query(sql_func.count(Listing.id)).filter(
+        PRIVATE_ONLY,
         Listing.undervaluation_score >= 60,
         Listing.scraped_at >= week_ago,
         Listing.status == "active",
