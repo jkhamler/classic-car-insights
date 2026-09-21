@@ -13,6 +13,9 @@ SEED_VEHICLES = [
     # Aston Martin DB9 — full production run, coupe and Volante convertible.
     # No price/mileage ceiling set for this hunt.
     VehicleCreate(make="Aston Martin", model="DB9", year_start=2004, year_end=2016, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="V12 (5.9L)"),
+    # Aston Martin V8 Vantage Roadster — 4.3L (2005-2008) and 4.7L
+    # (2008-2017ish, incl. V8 Vantage S). No price/mileage ceiling set.
+    VehicleCreate(make="Aston Martin", model="V8 Vantage Roadster", year_start=2005, year_end=2017, country_of_origin="United Kingdom", segment="sports car", body_style="roadster", engine_type="V8 (4.3L/4.7L)"),
 ]
 
 SEED_SOURCES = [

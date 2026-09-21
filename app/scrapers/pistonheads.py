@@ -35,6 +35,7 @@ BASE_URL = "https://www.pistonheads.com"
 MODEL_PATHS = [
     "/buy/mercedes-benz/sl",
     "/buy/aston-martin/db9",
+    "/buy/aston-martin/vantage",
 ]
 
 # Cross-make browse page for current live auctions — a model-scoped /buy/

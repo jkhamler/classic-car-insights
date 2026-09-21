@@ -34,10 +34,13 @@ SEARCH_POSTCODE = "SW1A1AA"
 SEARCH_RADIUS_MILES = 1500
 MAX_PAGES = 5
 
-# (make, model) pairs as AutoTrader's own search taxonomy spells them —
-# happen to match our canonical labels exactly for both current hunts.
+# (make, model) pairs as AutoTrader's own search taxonomy spells them.
+# "Vantage" covers V8/V12 and both generations — extract_make_model()'s
+# v8+roadster+year gate narrows it down after fetching, same pattern as
+# "SL" covering every SL generation down to just R107.
 SEARCHES = [
     ("Aston Martin", "DB9"),
+    ("Aston Martin", "Vantage"),
     ("Mercedes-Benz", "SL"),
 ]
 
@@ -69,8 +72,22 @@ class AutoTraderScraper(BaseScraper):
                             f"&radius={SEARCH_RADIUS_MILES}&page={page_num}"
                         )
                         try:
-                            await page.goto(url, timeout=30000, wait_until="networkidle")
-                            await page.wait_for_timeout(1500)
+                            # "networkidle" is unreliable here — the page
+                            # has persistent background analytics traffic
+                            # that never goes fully quiet, and it timed out
+                            # every time from Railway's network path (worked
+                            # fine locally). Wait for the DOM instead, then
+                            # explicitly wait for the listing cards (or the
+                            # result-count element, present even on a
+                            # genuine zero-result search) to actually render.
+                            await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+                            try:
+                                await page.wait_for_selector(
+                                    'li[data-advertid], [data-testid="search-result-count"]',
+                                    timeout=15000,
+                                )
+                            except Exception:
+                                pass  # proceed with whatever rendered — parsed as 0 cards if nothing did
                             html = await page.content()
                         except Exception as e:
                             msg = f"{make} {model} page={page_num}: fetch failed: {e}"

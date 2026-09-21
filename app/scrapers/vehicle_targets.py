@@ -4,11 +4,15 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Two hunts currently tracked:
+Three hunts currently tracked:
   - Mercedes-Benz R107 (SL-Class roadster, 1971-1989), model years 1986
     onwards only. No budget given — uncapped.
   - Aston Martin DB9 (2004-2016), all model years — coupe and Volante.
     DB9 is the current top search, capped at £35k discovery price.
+  - Aston Martin V8 Vantage Roadster, 4.3L or 4.7L (2005-2017ish, covers
+    the first-generation V8 Vantage and V8 Vantage S; excludes the V12
+    Vantage and the second-generation 2018+ "Vantage" nameplate). No
+    budget given — uncapped.
 """
 import re
 
@@ -50,6 +54,15 @@ MAKE_MAP: dict[str, str] = {
 # 280SL/350SL/380SL/450SL all ended production before 1986 and are excluded
 # outright rather than tracked-and-gated.
 R107_BADGE_RE = re.compile(r"\b(300|420|500|560)\s*sl\b")
+
+# "V8" and "Vantage" and "Roadster" all present, any order (titles vary:
+# "V8 Vantage Roadster" vs "Vantage V8 Roadster"). Requiring "v8" excludes
+# the V12 Vantage outright. Doesn't gate on displacement text (4.3L
+# 2005-2008 / 4.7L 2008+, including V8 Vantage S) since listings often
+# omit it — instead gated by year below, since the second-generation
+# 2018+ "Vantage" also carries a V8 (AMG-sourced) and got its own Roadster
+# from 2020, and would otherwise false-match on this same keyword set.
+V8_VANTAGE_ROADSTER_RE = re.compile(r"(?=.*\bv8\b)(?=.*\bvantage\b)(?=.*\broadster\b)")
 
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {
     "Mercedes-Benz": [
@@ -94,6 +107,24 @@ def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
             if year is None or 1986 <= year <= 1989:
                 return make, "SL (R107)"
 
+    if make == "Aston Martin":
+        if V8_VANTAGE_ROADSTER_RE.search(lowered):
+            # Confirmed live on PistonHeads: modern 4.0-litre twin-turbo
+            # Vantage Roadsters ("Euro 6", "510 ps"/"665 ps") show up with
+            # no year in the title at all, which would otherwise slip past
+            # the year gate below via its benefit-of-the-doubt fallback —
+            # "4.0" is an unambiguous signal for the second-gen car (the
+            # classic V8 is only ever 4.3 or 4.7), so exclude on it first.
+            if re.search(r"\b4\.0\b", lowered):
+                return make, None
+            year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
+            year = int(year_match.group(1)) if year_match else None
+            # Second-gen 2018+ "Vantage" (and its 2020+ Roadster) would
+            # otherwise false-match the same v8/vantage/roadster keywords —
+            # give an undated listing the benefit of the doubt, same as R107.
+            if year is None or year <= 2017:
+                return make, "V8 Vantage Roadster"
+
     return make, None
 
 
@@ -110,6 +141,7 @@ SEARCH_TERMS = [
     "mercedes+560sl",
     "mercedes+r107",
     "aston+martin+db9",
+    "aston+martin+v8+vantage+roadster",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
