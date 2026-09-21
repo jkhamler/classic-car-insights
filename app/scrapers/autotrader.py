@@ -15,6 +15,7 @@ Nationwide search: a fixed central postcode with a 1500-mile radius (more
 than the UK's longest possible span), so results aren't biased toward one
 region. Confirmed live: 83 UK results for "DB9" alone, ~21 per page.
 """
+import asyncio
 import logging
 import re
 from urllib.parse import urljoin
@@ -98,6 +99,18 @@ class AutoTraderScraper(BaseScraper):
                         cards = self._parse_page(html, seen_ids)
                         if not cards and page_num > 1:
                             break
+                        # The search card carries no description at all —
+                        # the seller's actual condition notes only live on
+                        # the listing's own page (confirmed live: a "40%
+                        # below benchmark" Vantage Roadster's description
+                        # turned out to mention a broken seat control unit
+                        # and a service coming due). Only worth the extra
+                        # page load for cars that actually matched one of
+                        # our tracked models, not every raw search result.
+                        for listing in cards:
+                            if listing.model:
+                                listing.description = await self._fetch_description(page, listing.listing_url)
+                                await asyncio.sleep(1.0)
                         all_listings.extend(cards)
                         logger.info(f"[AutoTrader] {make} {model} page={page_num}: found {len(cards)}")
                         if len(cards) < 15:  # fewer than a near-full page — no more results
@@ -113,6 +126,22 @@ class AutoTraderScraper(BaseScraper):
             raise RuntimeError(f"AutoTrader: every search failed to load; first error: {fetch_errors[0]}")
 
         return all_listings
+
+    async def _fetch_description(self, page, url: str) -> str | None:
+        try:
+            await page.goto(url, timeout=20000, wait_until="domcontentloaded")
+            try:
+                await page.wait_for_selector('[data-testid="description"]', timeout=8000)
+            except Exception:
+                return None  # some ads genuinely have no description section
+            el = await page.query_selector('[data-testid="description"] p')
+            if not el:
+                return None
+            text = await el.inner_text()
+            return clean_text(text)[:2000] if text else None
+        except Exception as e:
+            logger.debug(f"[AutoTrader] description fetch failed for {url}: {e}")
+            return None
 
     def _parse_page(self, html: str, seen_ids: set[str]) -> list[RawListing]:
         soup = BeautifulSoup(html, "lxml")

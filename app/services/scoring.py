@@ -98,6 +98,31 @@ def _score_source(source_type: str) -> float:
     return 100.0 if source_type == "discovery" else 30.0
 
 
+# Best-effort text scan — catches an explicit admission in the title or
+# seller's own description, nothing more. Can't see photos or infer
+# condition the seller didn't mention, so a clean score here is not a
+# guarantee the car is actually good, only that nothing obvious was
+# flagged in the text we have. Confirmed need live: a "40% below
+# benchmark" listing turned out to have a broken seat control unit and a
+# service coming due, mentioned only in its description, which nothing
+# in scoring was reading before.
+CONDITION_RED_FLAGS = [
+    "spares or repair", "spares/repair", "spares or repairs",
+    "non runner", "non-runner", "not running", "doesn't run", "does not run",
+    "won't start", "does not start", "no mot", "sold as seen", "sold as spares",
+    "project car", "needs work", "requires work", "needs attention",
+    "accident damage", "damaged", "write off", "write-off", "salvage",
+    "insurance write off", "cat c", "cat d", "cat n", "cat s",
+    "head gasket", "engine fault", "gearbox fault", "clutch fault",
+    "not working", "stopped working", "needs replacing", "needs reflashing",
+]
+
+
+def _condition_flags(listing: Listing) -> list[str]:
+    text = " ".join(filter(None, [listing.title, listing.description])).lower()
+    return [kw for kw in CONDITION_RED_FLAGS if kw in text]
+
+
 def compute_score(db: Session, listing: Listing) -> ScoreBreakdown | None:
     price = listing.price_gbp or listing.asking_price
     if not price or price <= 0:
@@ -146,6 +171,17 @@ def compute_score(db: Session, listing: Listing) -> ScoreBreakdown | None:
         parts.append(f"low mileage ({listing.mileage:,} {listing.mileage_unit})")
 
     explanation = ". ".join(parts) + "." if parts else "Score based on available data."
+
+    # A cheap price with an explicit fault mentioned in the text is not a
+    # bargain — it's priced that way for a reason. Penalize rather than
+    # exclude, since a minor mention (e.g. one worn part) shouldn't bury a
+    # listing as hard as a genuine "non runner, spares or repair" would.
+    flags = _condition_flags(listing)
+    if flags:
+        penalty = min(60.0, 20.0 * len(flags))
+        total = round(max(0.0, total - penalty), 1)
+        shown = ", ".join(f'"{f}"' for f in flags[:3])
+        explanation = f"⚠ Condition flag in listing text ({shown}) — verify before buying. " + explanation
 
     return ScoreBreakdown(
         price_vs_benchmark=round(price_score, 1),
