@@ -34,6 +34,7 @@ BASE_URL = "https://www.pistonheads.com"
 # narrowing down to R107 1986+ after fetching.
 MODEL_PATHS = [
     "/buy/mercedes-benz/sl",
+    "/buy/aston-martin/db9",
 ]
 
 # Cross-make browse page for current live auctions — a model-scoped /buy/
