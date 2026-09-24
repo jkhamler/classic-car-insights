@@ -36,13 +36,10 @@ SEARCH_RADIUS_MILES = 1500
 MAX_PAGES = 5
 
 # (make, model) pairs as AutoTrader's own search taxonomy spells them.
-# "Vantage" covers V8/V12 and both generations — extract_make_model()'s
-# v8+roadster+year gate narrows it down after fetching, same pattern as
-# "SL" covering every SL generation down to just R107.
+# "DB9" covers coupe, Volante, and every model year — extract_make_model()'s
+# volante+year gate narrows it down to the single tracked hunt after fetching.
 SEARCHES = [
     ("Aston Martin", "DB9"),
-    ("Aston Martin", "Vantage"),
-    ("Mercedes-Benz", "SL"),
 ]
 
 

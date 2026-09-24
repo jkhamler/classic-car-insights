@@ -28,14 +28,8 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.pistonheads.com"
 
-# PistonHeads doesn't have a dedicated classic-SL/R107 path — /buy/mercedes-
-# benz/sl covers every SL generation (R107 through R232), skewed toward
-# modern stock. extract_make_model()'s badge + year-gate does the real
-# narrowing down to R107 1986+ after fetching.
 MODEL_PATHS = [
-    "/buy/mercedes-benz/sl",
     "/buy/aston-martin/db9",
-    "/buy/aston-martin/vantage",
 ]
 
 # Cross-make browse page for current live auctions — a model-scoped /buy/

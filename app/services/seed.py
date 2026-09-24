@@ -6,16 +6,10 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Mercedes-Benz SL-Class R107 — 1986-1989 build years only (see
-    # vehicle_targets.py for why: only badges still in production in that
-    # window are tracked). No price/mileage ceiling set for this hunt.
-    VehicleCreate(make="Mercedes-Benz", model="SL", generation="R107", year_start=1986, year_end=1989, country_of_origin="Germany", segment="convertible", body_style="roadster", engine_type="I6/V8 (3.0L-5.6L)"),
-    # Aston Martin DB9 — full production run, coupe and Volante convertible.
-    # No price/mileage ceiling set for this hunt.
-    VehicleCreate(make="Aston Martin", model="DB9", year_start=2004, year_end=2016, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="V12 (5.9L)"),
-    # Aston Martin V8 Vantage Roadster — 4.3L (2005-2008) and 4.7L
-    # (2008-2017ish, incl. V8 Vantage S). No price/mileage ceiling set.
-    VehicleCreate(make="Aston Martin", model="V8 Vantage Roadster", year_start=2005, year_end=2017, country_of_origin="United Kingdom", segment="sports car", body_style="roadster", engine_type="V8 (4.3L/4.7L)"),
+    # Single hunt: Aston Martin DB9 Volante, late 2005/early 2006 build
+    # only (UK "55 plate" — the first Volante deliveries). Everything else
+    # dropped per explicit request. No price/mileage ceiling set.
+    VehicleCreate(make="Aston Martin", model="DB9 Volante", year_start=2005, year_end=2006, country_of_origin="United Kingdom", segment="grand tourer", body_style="convertible", engine_type="V12 (5.9L)"),
 ]
 
 SEED_SOURCES = [
