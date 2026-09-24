@@ -77,7 +77,7 @@ class AMOCScraper(BaseScraper):
                 description = clean_text(desc_el.get_text()) if desc_el else None
 
                 year = parse_year(title) or parse_year(description)
-                make, model = extract_make_model(f"Aston Martin {title}")
+                make, model = extract_make_model(f"Aston Martin {title}", year)
 
                 image_urls = []
                 img_el = card.select_one(".card-viewport-image")

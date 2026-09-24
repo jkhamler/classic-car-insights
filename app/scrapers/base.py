@@ -94,7 +94,7 @@ class BaseScraper(ABC):
             seen_external_ids: set[str] = set()
 
             for raw in raw_listings:
-                if not is_target_vehicle(raw.title):
+                if not is_target_vehicle(raw.title, raw.year):
                     continue
                 # Still live on the source's site as of this scrape — even if
                 # it gets skipped below for exceeding the discovery price/

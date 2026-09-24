@@ -196,7 +196,7 @@ class AutoTraderScraper(BaseScraper):
                         svg.decompose()
                     location = clean_text(location_el.get_text())
 
-                make, model = extract_make_model(title)
+                make, model = extract_make_model(title, year)
 
                 seller_type = "private" if card.select_one('[data-testid="private-seller"]') else "trade"
 

@@ -88,7 +88,7 @@ class NicholasMeeScraper(BaseScraper):
                         if description:
                             description = description[:2000]
 
-                    make, model = extract_make_model(title)
+                    make, model = extract_make_model(title, year)
 
                     listings.append(RawListing(
                         external_id=external_id,

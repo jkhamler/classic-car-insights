@@ -44,7 +44,15 @@ DB9_VOLANTE_RE = re.compile(r"(?=.*\bdb\s*-?\s*9\b)(?=.*\bvolante\b)")
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
 
 
-def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
+def extract_make_model(title: str | None, year: int | None = None) -> tuple[str | None, str | None]:
+    """`year`: pass the listing's own structured year field when the caller
+    has one. Several sources (AutoTrader confirmed live) never embed a year
+    in the title text at all — it only lives in a separate field — so
+    relying on regex-scraping the title alone silently defeats every
+    year-gate below via its "benefit of the doubt" fallback, letting
+    completely wrong model years through. Falls back to scanning the title
+    only when no structured year is supplied.
+    """
     if not title:
         return None, None
     lowered = title.lower()
@@ -63,8 +71,9 @@ def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
 
     if make == "Aston Martin":
         if DB9_VOLANTE_RE.search(lowered):
-            year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
-            year = int(year_match.group(1)) if year_match else None
+            if year is None:
+                title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
+                year = int(title_year_match.group(1)) if title_year_match else None
             # Late-2005/early-2006 build only — give an undated listing the
             # benefit of the doubt rather than silently dropping it, same
             # pattern used for every other year-gated model here before.
@@ -74,8 +83,8 @@ def extract_make_model(title: str | None) -> tuple[str | None, str | None]:
     return make, None
 
 
-def is_target_vehicle(title: str | None) -> bool:
-    make, model = extract_make_model(title)
+def is_target_vehicle(title: str | None, year: int | None = None) -> bool:
+    make, model = extract_make_model(title, year)
     return make is not None and model is not None
 
 

@@ -83,7 +83,10 @@ class PistonHeadsScraper(BaseScraper):
             seller = apollo.get(seller_ref, {}) if seller_ref else {}
 
             title = obj.get("headline")
-            make, model = extract_make_model(title)
+            # year lives in its own field here, not embedded in the
+            # headline — extract_make_model()'s title-only fallback would
+            # silently skip its year gate without this.
+            make, model = extract_make_model(title, obj.get("year"))
             if not model:
                 continue  # not one of our tracked models
 
