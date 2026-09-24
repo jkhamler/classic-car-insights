@@ -40,6 +40,7 @@ MAX_PAGES = 5
 # volante+year gate narrows it down to the single tracked hunt after fetching.
 SEARCHES = [
     ("Aston Martin", "DB9"),
+    ("Aston Martin", "DB11"),
 ]
 
 
