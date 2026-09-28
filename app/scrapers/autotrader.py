@@ -70,31 +70,73 @@ class AutoTraderScraper(BaseScraper):
                             f"&make={make.replace(' ', '%20')}&model={model}"
                             f"&radius={SEARCH_RADIUS_MILES}&page={page_num}"
                         )
-                        try:
-                            # "networkidle" is unreliable here — the page
-                            # has persistent background analytics traffic
-                            # that never goes fully quiet, and it timed out
-                            # every time from Railway's network path (worked
-                            # fine locally). Wait for the DOM instead, then
-                            # explicitly wait for the listing cards (or the
-                            # result-count element, present even on a
-                            # genuine zero-result search) to actually render.
-                            await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+                        # A mid-page returning 0 cards while later pages
+                        # have real results is a confirmed live failure
+                        # mode (page 3 of 5 came back empty once, most
+                        # likely a transient anti-bot hiccup from hitting
+                        # this site repeatedly) — if that page had been
+                        # treated as "end of results" the way a genuine
+                        # last page is, pagination stops early and every
+                        # listing only reachable on a later page gets
+                        # wrongly marked sold by the delisting logic below.
+                        # Retry an empty page once before trusting it.
+                        cards: list[RawListing] = []
+                        fetch_failed = False
+                        for attempt in range(2):
                             try:
-                                await page.wait_for_selector(
-                                    'li[data-advertid], [data-testid="search-result-count"]',
-                                    timeout=15000,
-                                )
-                            except Exception:
-                                pass  # proceed with whatever rendered — parsed as 0 cards if nothing did
-                            html = await page.content()
-                        except Exception as e:
-                            msg = f"{make} {model} page={page_num}: fetch failed: {e}"
-                            logger.error(f"[AutoTrader] {msg}")
-                            fetch_errors.append(msg)
-                            break
+                                # "networkidle" is unreliable here — the
+                                # page has persistent background analytics
+                                # traffic that never goes fully quiet, and
+                                # it timed out every time from Railway's
+                                # network path (worked fine locally). Wait
+                                # for the DOM instead, then explicitly wait
+                                # for the listing cards (or the result-count
+                                # element, present even on a genuine
+                                # zero-result search) to actually render.
+                                await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+                                try:
+                                    # Wait for the actual cards first, not
+                                    # an OR of cards-or-count-element —
+                                    # confirmed live that the count text can
+                                    # render before the cards do, so the OR
+                                    # form resolves early and page.content()
+                                    # gets grabbed with zero cards rendered
+                                    # yet even on a page with real results.
+                                    # Only fall back to the count element
+                                    # (present even on a genuine zero-result
+                                    # page) once the card-wait itself times out.
+                                    await page.wait_for_selector('li[data-advertid]', timeout=10000)
+                                except Exception:
+                                    try:
+                                        await page.wait_for_selector(
+                                            '[data-testid="search-result-count"]', timeout=5000,
+                                        )
+                                    except Exception:
+                                        pass  # proceed with whatever rendered — parsed as 0 cards if nothing did
+                                html = await page.content()
+                                fetch_failed = False
+                            except Exception as e:
+                                msg = f"{make} {model} page={page_num}: fetch failed: {e}"
+                                logger.error(f"[AutoTrader] {msg}")
+                                fetch_errors.append(msg)
+                                fetch_failed = True
+                                break
 
-                        cards = self._parse_page(html, seen_ids)
+                            cards = self._parse_page(html, seen_ids)
+                            if cards:
+                                break
+                            # Confirmed live: page 1 itself can come back
+                            # with 0 cards on a genuine hiccup even for a
+                            # search known to have results — retry it too,
+                            # not just later pages.
+                            logger.warning(
+                                f"[AutoTrader] {make} {model} page={page_num}: "
+                                f"0 cards on attempt {attempt + 1}, retrying before treating as end of results"
+                            )
+                            await asyncio.sleep(3.0)
+
+                        if fetch_failed:
+                            break
                         if not cards and page_num > 1:
                             break
                         # The search card carries no description at all —
