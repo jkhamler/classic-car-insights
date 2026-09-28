@@ -102,10 +102,14 @@ def _score_source(source_type: str) -> float:
 # seller's own description, nothing more. Can't see photos or infer
 # condition the seller didn't mention, so a clean score here is not a
 # guarantee the car is actually good, only that nothing obvious was
-# flagged in the text we have. Confirmed need live: a "40% below
-# benchmark" listing turned out to have a broken seat control unit and a
-# service coming due, mentioned only in its description, which nothing
-# in scoring was reading before.
+# flagged in the text we have. This list has already missed real issues
+# twice: a "40% below benchmark" listing whose broken seat control unit
+# only showed up as "stopped working"/"needs reflashing" (now covered),
+# and a 69-scored "cheap" DB9 Volante whose seller admitted a dead
+# speedo, a seat that "doesn't move", an AC "gas leak", and a cracked
+# windscreen — none of which matched anything below at the time. Prefer
+# broad word stems ("leak", "crack") over ever-growing exact phrases,
+# since sellers phrase the same defect differently every time.
 CONDITION_RED_FLAGS = [
     "spares or repair", "spares/repair", "spares or repairs",
     "non runner", "non-runner", "not running", "doesn't run", "does not run",
@@ -115,12 +119,41 @@ CONDITION_RED_FLAGS = [
     "insurance write off", "cat c", "cat d", "cat n", "cat s",
     "head gasket", "engine fault", "gearbox fault", "clutch fault",
     "not working", "stopped working", "needs replacing", "needs reflashing",
+    "doesn't work", "does not work", "doesn't move", "does not move",
+    "leak", "leaking", "leaks", "crack", "cracked", "cracking",
+    "fault", "faulty", "no test drive", "no test drives",
 ]
 
 
+_NEGATION_PREFIXES = ("no ", "not ", "never ", "without ", "no known ", "zero ")
+
+
 def _condition_flags(listing: Listing) -> list[str]:
-    text = " ".join(filter(None, [listing.title, listing.description])).lower()
-    return [kw for kw in CONDITION_RED_FLAGS if kw in text]
+    # Sellers type contractions inconsistently ("doesnt work" vs "doesn't
+    # work") — confirmed live in the same listing that motivated this list
+    # ("doesnt work" for the speedo, "doesn't move" for the seat, one
+    # apostrophe apart). Strip apostrophes from both sides before matching
+    # rather than maintaining spelling variants for every keyword.
+    text = " ".join(filter(None, [listing.title, listing.description])).lower().replace("'", "")
+
+    flags = []
+    for kw in CONDITION_RED_FLAGS:
+        kw_norm = kw.replace("'", "")
+        idx = text.find(kw_norm)
+        if idx == -1:
+            continue
+        # Broad stems like "leak"/"crack"/"fault" would otherwise false-
+        # positive on a seller's own reassurance ("no leaks", "fault-free
+        # history") — skip a match immediately preceded by a negation word
+        # or immediately followed by "-free"/" free".
+        before = text[max(0, idx - 12):idx]
+        after = text[idx + len(kw_norm):idx + len(kw_norm) + 6]
+        if any(before.endswith(neg) for neg in _NEGATION_PREFIXES):
+            continue
+        if after.startswith("-free") or after.startswith(" free"):
+            continue
+        flags.append(kw)
+    return flags
 
 
 def compute_score(db: Session, listing: Listing) -> ScoreBreakdown | None:
