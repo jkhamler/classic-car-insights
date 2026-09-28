@@ -9,8 +9,8 @@ Two hunts:
     plate" territory — the first model year the RHD Volante was actually
     delivered in). Coupes, later Volantes, and the DB9 GT/facelift are all
     excluded. No budget given — uncapped.
-  - Aston Martin DB11 (2016-2023, DB9's successor) — any body style/year
-    within that run, capped at £65k discovery price.
+  - Aston Martin DB11 (2017 onwards only — excludes 2016 launch-year cars —
+    DB9's successor), any body style, capped at £65k discovery price.
 """
 import re
 
@@ -45,13 +45,14 @@ MAKE_MAP: dict[str, str] = {
 # logic) — see extract_make_model().
 DB9_VOLANTE_RE = re.compile(r"(?=.*\bdb\s*-?\s*9\b)(?=.*\bvolante\b)")
 
-MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {
-    "Aston Martin": [
-        # "db11" never matches the db9 pattern above (digit sequence is
-        # "11" not "9") — no collision, order doesn't matter between them.
-        (r"\bdb\s*-?\s*11\b", "DB11"),
-    ],
-}
+# "db11" never matches the db9 pattern above (digit sequence is "11" not
+# "9") — no collision. Year-gated below (2017+ only), same reason DB9
+# Volante needs a dedicated branch rather than a plain MODEL_PATTERNS_BY_MAKE
+# entry: that list returns immediately on match with no room for post-match
+# year logic.
+DB11_RE = re.compile(r"\bdb\s*-?\s*11\b")
+
+MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
 
 
 def extract_make_model(title: str | None, year: int | None = None) -> tuple[str | None, str | None]:
@@ -89,6 +90,16 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
             # pattern used for every other year-gated model here before.
             if year is None or 2005 <= year <= 2006:
                 return make, "DB9 Volante"
+
+        if DB11_RE.search(lowered):
+            if year is None:
+                title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
+                year = int(title_year_match.group(1)) if title_year_match else None
+            # 2017 onwards only — excludes 2016 launch-year cars. Same
+            # benefit-of-the-doubt fallback for undated listings as every
+            # other year-gated model here.
+            if year is None or year >= 2017:
+                return make, "DB11"
 
     return make, None
 
