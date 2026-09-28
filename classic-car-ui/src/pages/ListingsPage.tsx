@@ -8,9 +8,14 @@ import { formatPrice } from '../components/common/formatPrice';
 export default function ListingsPage() {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
-  // Defaults to "gems only" — anything meaningfully cheaper than its
-  // current peer set, not just everything within budget. Clearable.
-  const [minScore, setMinScore] = useState('50');
+  // No default floor — with the private-only filter plus narrow tracked
+  // models already cutting the pool down to a handful of listings, a
+  // fixed score>50 default went from "hides noise" to "hides everything"
+  // the moment real scores started landing in the 40s (confirmed live:
+  // best current score is 49.8, so the old default showed 0 results).
+  // Sort-by-score still puts the best candidates first; this is just not
+  // a hard cutoff anymore.
+  const [minScore, setMinScore] = useState('');
   const [sortBy, setSortBy] = useState('score');
   const [page, setPage] = useState(1);
 
