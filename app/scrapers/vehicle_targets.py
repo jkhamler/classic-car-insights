@@ -9,8 +9,9 @@ Two hunts:
     plate" territory — the first model year the RHD Volante was actually
     delivered in). Coupes, later Volantes, and the DB9 GT/facelift are all
     excluded. No budget given — uncapped.
-  - Aston Martin DB11 (2017 onwards only — excludes 2016 launch-year cars —
-    DB9's successor), any body style, capped at £65k discovery price.
+  - Aston Martin DB11 V12 only (excludes the V8), 2017 onwards only
+    (excludes 2016 launch-year cars) — DB9's successor, any body style,
+    capped at £65k discovery price.
 """
 import re
 
@@ -20,7 +21,7 @@ import re
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
 DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
-    ("Aston Martin", "DB11"): 65000,
+    ("Aston Martin", "DB11 V12"): 65000,
 }
 
 # Mileage ceiling — global (not per-vehicle, unlike price) since no hunt
@@ -92,6 +93,13 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
                 return make, "DB9 Volante"
 
         if DB11_RE.search(lowered):
+            # V12 only, excludes the V8 — no benefit-of-the-doubt here
+            # unlike the year gate: engine isn't implied by the model name
+            # (both are just "DB11"), so an unstated engine is genuinely
+            # ambiguous rather than "probably fine", and getting a V8
+            # wrong is exactly the mismatch being screened for.
+            if "v12" not in lowered:
+                return make, None
             if year is None:
                 title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
                 year = int(title_year_match.group(1)) if title_year_match else None
@@ -99,7 +107,7 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
             # benefit-of-the-doubt fallback for undated listings as every
             # other year-gated model here.
             if year is None or year >= 2017:
-                return make, "DB11"
+                return make, "DB11 V12"
 
     return make, None
 
