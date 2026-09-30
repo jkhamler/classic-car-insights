@@ -6,13 +6,10 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Aston Martin DB9 Volante, late 2005/early 2006 build only (UK "55
-    # plate" — the first Volante deliveries). No price/mileage ceiling set.
+    # Single hunt: Aston Martin DB9 Volante, UK "55 plate" only (Sept
+    # 2005-Feb 2006 — the first Volante deliveries). DB11 dropped per
+    # explicit request. No price/mileage ceiling set.
     VehicleCreate(make="Aston Martin", model="DB9 Volante", year_start=2005, year_end=2006, country_of_origin="United Kingdom", segment="grand tourer", body_style="convertible", engine_type="V12 (5.9L)"),
-    # Aston Martin DB11, V12 only (excludes V8) — DB9's successor, any
-    # body style, 2017 onwards only (excludes 2016 launch-year cars).
-    # Capped at £65k discovery price.
-    VehicleCreate(make="Aston Martin", model="DB11 V12", year_start=2017, year_end=2023, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="V12 (5.2L)"),
 ]
 
 SEED_SOURCES = [
