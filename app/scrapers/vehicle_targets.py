@@ -4,10 +4,10 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Single hunt, per explicit request to drop DB11 and refocus on one car:
-Aston Martin DB9 Volante, UK "55 plate" only (registered Sept 2005-Feb
-2006 — the first RHD Volante deliveries). Coupes, later Volantes, and the
-DB9 GT/facelift are all excluded. No budget given — uncapped.
+Single hunt: Aston Martin DB9, UK "55 plate" only (registered Sept
+2005-Feb 2006). Any body style — coupe or Volante, per explicit request
+to stop restricting to Volante only. Later years and the DB9 GT/facelift
+are still excluded via the year gate. No budget given — uncapped.
 """
 import re
 
@@ -34,11 +34,11 @@ MAKE_MAP: dict[str, str] = {
     "aston-martin": "Aston Martin",
 }
 
-# "db9" and "volante" both present, any order. Year gate applied separately
-# below (can't express "AND year in range" as a single independent tuple
-# entry the way MODEL_PATTERNS_BY_MAKE works, since that needs post-match
-# logic) — see extract_make_model().
-DB9_VOLANTE_RE = re.compile(r"(?=.*\bdb\s*-?\s*9\b)(?=.*\bvolante\b)")
+# Any DB9 — coupe or Volante. Year gate applied separately below (can't
+# express "AND year in range" as a single independent tuple entry the way
+# MODEL_PATTERNS_BY_MAKE works, since that needs post-match logic) — see
+# extract_make_model().
+DB9_RE = re.compile(r"\bdb\s*-?\s*9\b")
 
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
 
@@ -69,7 +69,7 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
             return make, label
 
     if make == "Aston Martin":
-        if DB9_VOLANTE_RE.search(lowered):
+        if DB9_RE.search(lowered):
             if year is None:
                 title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
                 year = int(title_year_match.group(1)) if title_year_match else None
@@ -79,7 +79,7 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
             # the benefit of the doubt rather than silently dropping it,
             # same pattern used for every other year-gated model here.
             if year is None or 2005 <= year <= 2006:
-                return make, "DB9 Volante"
+                return make, "DB9"
 
     return make, None
 
@@ -91,7 +91,7 @@ def is_target_vehicle(title: str | None, year: int | None = None) -> bool:
 
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
-    "aston+martin+db9+volante",
+    "aston+martin+db9",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),

@@ -4,10 +4,6 @@ from app.db.models.listing import Listing
 from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
 
-# Private sales only — trade/dealer stock and listings we can't identify
-# the seller type for are excluded outright, not just deprioritized.
-PRIVATE_ONLY = Listing.seller_type == "private"
-
 
 def get_listings(
     db: Session,
@@ -25,7 +21,7 @@ def get_listings(
     page: int = 1,
     per_page: int = 20,
 ) -> tuple[list[Listing], int]:
-    q = db.query(Listing).filter(PRIVATE_ONLY)
+    q = db.query(Listing)
 
     if status:
         q = q.filter(Listing.status == status)
@@ -108,7 +104,6 @@ def get_top_opportunities(
     max_price_gbp: float | None = None,
 ) -> list[Listing]:
     q = db.query(Listing).filter(
-        PRIVATE_ONLY,
         Listing.status == "active",
         Listing.undervaluation_score.isnot(None),
     )
@@ -123,7 +118,6 @@ def get_top_opportunities(
 
 def count_active_for_vehicle(db: Session, vehicle_id: int) -> int:
     return db.query(Listing).filter(
-        PRIVATE_ONLY,
         Listing.vehicle_id == vehicle_id,
         Listing.status == "active",
     ).count()
