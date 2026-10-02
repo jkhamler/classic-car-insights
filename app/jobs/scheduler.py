@@ -84,6 +84,10 @@ def setup_scheduler():
         run_scraper, IntervalTrigger(hours=24),
         args=["autotrader"], id="scrape_autotrader",
     )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["collecting_cars"], id="scrape_collecting_cars",
+    )
     # Nightly re-scoring at 3 AM
     scheduler.add_job(
         run_scoring, CronTrigger(hour=3), id="nightly_rescore",

@@ -141,6 +141,14 @@ SEED_SOURCES = [
         scraper_class="AutoTraderScraper",
         scrape_frequency_minutes=360,
     ),
+    SourceCreate(
+        name="collecting_cars",
+        display_name="Collecting Cars",
+        source_type="discovery",
+        base_url="https://collectingcars.com",
+        scraper_class="CollectingCarsScraper",
+        scrape_frequency_minutes=360,
+    ),
 ]
 
 

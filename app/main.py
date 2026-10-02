@@ -26,6 +26,7 @@ import app.scrapers.prestige_automotives  # noqa: F401
 import app.scrapers.amoc  # noqa: F401
 import app.scrapers.nicholas_mee  # noqa: F401
 import app.scrapers.autotrader  # noqa: F401
+import app.scrapers.collecting_cars  # noqa: F401
 
 app = FastAPI(title="Classic Car Insights", lifespan=lifespan)
 
