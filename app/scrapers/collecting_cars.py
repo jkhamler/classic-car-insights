@@ -14,6 +14,16 @@ No reliable per-listing private/trade seller signal: the "consignor"
 shown on every listing is a Collecting Cars staff member facilitating
 the sale, not the actual owner — same ambiguity as the UK auction houses
 (Historics, Mathewsons, etc.), so seller_type is left unset here too.
+
+Collecting Cars is UK/EU, not UK-only, and the single tracked hunt is a
+UK "55 plate" car specifically — so a continental-market DB9 (e.g. an
+Italian-market car, confirmed live via a listing with "Original market:
+Italy" and km mileage, no UK registration field at all) must not count
+as a match even though its year/model matches. Genuine UK cars show a
+"Registration" field with a UK plate instead of "Original market", so
+any non-UK "Original market" value is used to reject the listing
+outright; absent that field, benefit of the doubt applies like the year
+gate elsewhere.
 """
 import asyncio
 import logging
@@ -31,6 +41,11 @@ from app.scrapers.vehicle_targets import extract_make_model
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://collectingcars.com"
+
+UK_MARKET_TERMS = {
+    "uk", "united kingdom", "great britain", "gb",
+    "england", "scotland", "wales", "northern ireland",
+}
 
 # Category pages to pull listing links from — currently just DB9, matching
 # the single tracked hunt. The numeric IDs in the path are Collecting
@@ -106,6 +121,11 @@ class CollectingCarsScraper(BaseScraper):
                 if key:
                     spec[key.lower()] = clean_text(value_el.get_text())
 
+        original_market = spec.get("original market")
+        if original_market and original_market.strip().lower() not in UK_MARKET_TERMS:
+            logger.info(f"[CollectingCars] Skipping {slug}: non-UK original market ({original_market!r})")
+            return None
+
         year = parse_year(title)
         mileage, mileage_unit = parse_mileage(spec.get("mileage")) if spec.get("mileage") else (None, "miles")
 
@@ -148,6 +168,7 @@ class CollectingCarsScraper(BaseScraper):
             mileage_unit=mileage_unit,
             color=spec.get("exterior"),
             transmission=None,
+            location=original_market or spec.get("registration"),
             description=description,
             image_urls=image_urls,
         )
