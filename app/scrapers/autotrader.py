@@ -40,9 +40,16 @@ MAX_PAGES = 5
 # volante+year gate narrows it down to the single tracked hunt after fetching.
 # "911" similarly covers every 911 generation/trim — extract_make_model()'s
 # "911"+"turbo"+year gate narrows it down to 996 Turbo only after fetching.
+# Jaguar XK spans three separate AutoTrader model values — confirmed live
+# "XK" (the later X150), "XK8" and "XKR" (the earlier X100) are distinct
+# taxonomy entries, not one dropdown — extract_make_model()'s year gate
+# narrows all three down to 2005-2006 only after fetching.
 SEARCHES = [
     ("Aston Martin", "DB9"),
     ("Porsche", "911"),
+    ("Jaguar", "XK"),
+    ("Jaguar", "XK8"),
+    ("Jaguar", "XKR"),
 ]
 
 

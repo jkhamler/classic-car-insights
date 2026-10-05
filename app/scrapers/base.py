@@ -15,7 +15,7 @@ from app.db.models.listing import Listing
 from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
 from app.scrapers.vehicle_targets import (
-    is_target_vehicle, MAX_DISCOVERY_MILEAGE_MILES, discovery_price_ceiling,
+    is_target_vehicle, discovery_price_ceiling, discovery_mileage_ceiling,
 )
 
 logger = logging.getLogger(__name__)
@@ -104,14 +104,12 @@ class BaseScraper(ABC):
                     ceiling = discovery_price_ceiling(raw.make, raw.model)
                     if ceiling is not None and raw.price_gbp > ceiling:
                         continue
-                if (
-                    self.source.source_type == "discovery"
-                    and MAX_DISCOVERY_MILEAGE_MILES is not None
-                    and raw.mileage is not None
-                ):
-                    mileage_miles = raw.mileage * 0.621371 if raw.mileage_unit == "km" else raw.mileage
-                    if mileage_miles > MAX_DISCOVERY_MILEAGE_MILES:
-                        continue
+                if self.source.source_type == "discovery" and raw.mileage is not None:
+                    mileage_ceiling = discovery_mileage_ceiling(raw.make, raw.model)
+                    if mileage_ceiling is not None:
+                        mileage_miles = raw.mileage * 0.621371 if raw.mileage_unit == "km" else raw.mileage
+                        if mileage_miles > mileage_ceiling:
+                            continue
                 try:
                     listing_data = ListingCreate(
                         source_id=self.source.id,

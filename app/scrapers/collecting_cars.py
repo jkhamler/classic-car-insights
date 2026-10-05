@@ -61,12 +61,16 @@ BASE_URL = "https://collectingcars.com"
 
 # Category pages to pull listing links from. The numeric IDs in each path
 # are Collecting Cars' own internal taxonomy IDs for make/model; fragile if
-# they ever change, but confirmed live and working today. The 911 page
-# covers every generation/trim — extract_make_model() narrows it to 996
-# Turbo only after fetching, same as every other source.
+# they ever change, but confirmed live and working today. The 911 and XK
+# pages each cover every generation/trim under that nameplate —
+# extract_make_model() narrows each down to its specific tracked hunt
+# after fetching, same as every other source. Unlike AutoTrader's taxonomy
+# (which splits XK/XK8/XKR into three separate model values), Collecting
+# Cars pools all of them under this one XK category.
 CATEGORY_PATHS = [
     "/makes/Aston-Martin/59/DB9/1473",
     "/makes/Porsche/1/911/5",
+    "/makes/Jaguar/21/XK/157",
 ]
 
 

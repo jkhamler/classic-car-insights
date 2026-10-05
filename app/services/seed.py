@@ -14,6 +14,11 @@ SEED_VEHICLES = [
     # ceiling in vehicle_targets.py). Verified live/coming-soon lots only —
     # Collecting Cars drops anything already Sold before it's even fetched.
     VehicleCreate(make="Porsche", model="996 Turbo", year_start=2000, year_end=2005, country_of_origin="Germany", segment="sports car", body_style="coupe/cabriolet", engine_type="3.6L twin-turbo flat-6"),
+    # Jaguar XK (XK8/XKR/X150 XK pooled as one), 2005-2006 only. Under £10k
+    # and under 70k miles (discovery price/mileage ceilings in
+    # vehicle_targets.py) — the mileage cap stands in for "really good
+    # condition" per explicit request.
+    VehicleCreate(make="Jaguar", model="XK", year_start=2005, year_end=2006, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="4.2L V8 (XK8) / supercharged 4.2L V8 (XKR)"),
 ]
 
 SEED_SOURCES = [
