@@ -89,12 +89,24 @@ class CollectingCarsScraper(BaseScraper):
                 slug_states: dict[str, str] = {}
                 for path in CATEGORY_PATHS:
                     try:
-                        await page.goto(urljoin(BASE_URL, path), timeout=30000, wait_until="domcontentloaded")
-                        # Cloudflare's challenge resolves client-side —
-                        # confirmed live it needs a few seconds beyond
-                        # plain DOM-ready before the real page replaces it.
-                        await page.wait_for_timeout(6000)
-                        html = await page.content()
+                        html = ""
+                        # Cloudflare's challenge resolves client-side and
+                        # usually clears within 6s, but confirmed live it
+                        # occasionally still shows "Just a moment..." after
+                        # that — retrying a couple of times catches it,
+                        # which matters a lot more now than it used to:
+                        # a dud fetch here used to just under-report new
+                        # listings, but now it would also make every
+                        # not-rediscovered listing look sold.
+                        for attempt in range(3):
+                            await page.goto(urljoin(BASE_URL, path), timeout=30000, wait_until="domcontentloaded")
+                            await page.wait_for_timeout(6000)
+                            html = await page.content()
+                            if "Just a moment" not in html:
+                                break
+                        else:
+                            logger.error(f"[CollectingCars] {path}: still Cloudflare-challenged after 3 attempts, skipping")
+                            continue
                         found = self._parse_category_cards(html)
                         for slug, state in found.items():
                             if slug_states.get(slug) != "live":
