@@ -38,8 +38,11 @@ MAX_PAGES = 5
 # (make, model) pairs as AutoTrader's own search taxonomy spells them.
 # "DB9" covers coupe, Volante, and every model year — extract_make_model()'s
 # volante+year gate narrows it down to the single tracked hunt after fetching.
+# "911" similarly covers every 911 generation/trim — extract_make_model()'s
+# "911"+"turbo"+year gate narrows it down to 996 Turbo only after fetching.
 SEARCHES = [
     ("Aston Martin", "DB9"),
+    ("Porsche", "911"),
 ]
 
 

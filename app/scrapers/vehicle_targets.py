@@ -4,10 +4,17 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Single hunt: Aston Martin DB9, UK "55 plate" only (registered Sept
-2005-Feb 2006). Any body style — coupe or Volante, per explicit request
-to stop restricting to Volante only. Later years and the DB9 GT/facelift
-are still excluded via the year gate. No budget given — uncapped.
+Two hunts currently tracked:
+- Aston Martin DB9, UK "55 plate" only (registered Sept 2005-Feb 2006).
+  Any body style — coupe or Volante, per explicit request to stop
+  restricting to Volante only. Later years and the DB9 GT/facelift are
+  still excluded via the year gate. No budget given — uncapped.
+- Porsche 911 (996) Turbo, under £30k. Matched on "911"+"turbo" rather
+  than requiring the literal "996" chassis code in the title — classified
+  ad titles (AutoTrader etc.) routinely omit it — and disambiguated from
+  every other 911 Turbo generation (930/964/993/997/991/992) via the
+  2000-2005 year gate instead, same "benefit of the doubt when unknown"
+  pattern as DB9.
 """
 import re
 
@@ -16,7 +23,9 @@ import re
 # accurate fair-value baseline across the whole market, not just what the
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
-DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {}
+DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
+    ("Porsche", "996 Turbo"): 30_000,
+}
 
 # Mileage ceiling — global (not per-vehicle, unlike price) since no hunt
 # has needed one differentiated by vehicle yet. None = no ceiling.
@@ -32,6 +41,7 @@ def discovery_price_ceiling(make: str | None, model: str | None) -> float | None
 MAKE_MAP: dict[str, str] = {
     "aston martin": "Aston Martin",
     "aston-martin": "Aston Martin",
+    "porsche": "Porsche",
 }
 
 # Any DB9 — coupe or Volante. Year gate applied separately below (can't
@@ -39,6 +49,11 @@ MAKE_MAP: dict[str, str] = {
 # MODEL_PATTERNS_BY_MAKE works, since that needs post-match logic) — see
 # extract_make_model().
 DB9_RE = re.compile(r"\bdb\s*-?\s*9\b")
+
+# "911" and "turbo" anywhere in the title, either order — not "996" itself,
+# since classified titles often drop the chassis code. Year gate (below)
+# does the real generation disambiguation.
+PORSCHE_911_TURBO_RE = re.compile(r"(?=.*\b911\b)(?=.*\bturbo\b)")
 
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
 
@@ -81,6 +96,17 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
             if year is None or 2005 <= year <= 2006:
                 return make, "DB9"
 
+    if make == "Porsche":
+        if PORSCHE_911_TURBO_RE.search(lowered):
+            if year is None:
+                title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
+                year = int(title_year_match.group(1)) if title_year_match else None
+            # 996 generation ran 2000-2005; this is what actually tells a
+            # 996 Turbo apart from a 993/997/991/992 Turbo, since the title
+            # text often doesn't say "996" at all.
+            if year is None or 2000 <= year <= 2005:
+                return make, "996 Turbo"
+
     return make, None
 
 
@@ -92,10 +118,12 @@ def is_target_vehicle(title: str | None, year: int | None = None) -> bool:
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
     "aston+martin+db9",
+    "porsche+911+turbo",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
 # relying on is_target_vehicle() as the real filter after fetching.
 SEARCH_MAKES_ONLY = [
     "Aston Martin",
+    "Porsche",
 ]

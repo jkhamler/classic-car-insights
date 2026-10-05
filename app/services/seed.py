@@ -6,9 +6,13 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Single hunt: Aston Martin DB9, UK "55 plate" only (Sept 2005-Feb
-    # 2006). Any body style — coupe or Volante. No price/mileage ceiling set.
+    # Aston Martin DB9, UK "55 plate" only (Sept 2005-Feb 2006). Any body
+    # style — coupe or Volante. No price/mileage ceiling set.
     VehicleCreate(make="Aston Martin", model="DB9", year_start=2005, year_end=2006, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="V12 (5.9L)"),
+    # Porsche 911 (996) Turbo, 2000-2005. Under £30k (discovery price
+    # ceiling in vehicle_targets.py). Verified live/coming-soon lots only —
+    # Collecting Cars drops anything already Sold before it's even fetched.
+    VehicleCreate(make="Porsche", model="996 Turbo", year_start=2000, year_end=2005, country_of_origin="Germany", segment="sports car", body_style="coupe/cabriolet", engine_type="3.6L twin-turbo flat-6"),
 ]
 
 SEED_SOURCES = [
