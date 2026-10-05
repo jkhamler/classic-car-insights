@@ -25,20 +25,26 @@ shown on every listing is a Collecting Cars staff member facilitating
 the sale, not the actual owner — same ambiguity as the UK auction houses
 (Historics, Mathewsons, etc.), so seller_type is left unset here too.
 
-Collecting Cars is UK/EU, not UK-only. The DB9 hunt is a UK "55 plate"
-car specifically, so a continental-market DB9 (e.g. an Italian-market
-car, confirmed live via a listing with "Original market: Italy" and km
-mileage, no UK registration field at all) must not count even though its
-year/model matches — but this is a DB9-only constraint, not a site-wide
-one (the 996 Turbo hunt has no country restriction), so the "Original
-market" check below only runs when the matched model is DB9. Genuine UK
-cars show a "Registration" field with a UK plate instead of "Original
-market", so any non-UK "Original market" value rejects the DB9 listing
-outright; absent that field, benefit of the doubt applies like the year
-gate elsewhere.
+Collecting Cars is global, not UK-only — this whole platform is a UK
+buyer's tool (AutoTrader search is UK-nationwide-only; the DB9 hunt is a
+UK "55 plate" car specifically), so a non-UK Collecting Cars lot must
+never count, whatever model it is. Confirmed live two different ways
+this leaked through: an Italian-market DB9 Volante (spec grid showed
+"Original market: Italy", km mileage, no UK registration field at all),
+and a Sydney, NSW 996 Turbo — the first was caught by checking the spec
+grid's "Original market" field, but the second has no such field at all
+(its spec grid is sparser, being a Coming Soon lot), so that approach
+missed it. Every category-page card, regardless of state or model,
+carries a `flagcdn.com/<cc>.svg` country flag image instead — reading
+the 2-letter code off that at discovery time is universal and doesn't
+depend on the listing's own spec grid being populated, so that's what's
+used now; anything not "gb" is dropped before it's even fetched, same
+as a Sold lot. No flag found at all (shouldn't normally happen) gets
+the benefit of the doubt, same pattern as the year gate elsewhere.
 """
 import asyncio
 import logging
+import re
 from urllib.parse import urljoin
 
 from playwright.async_api import async_playwright
@@ -52,11 +58,6 @@ from app.scrapers.vehicle_targets import extract_make_model
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://collectingcars.com"
-
-UK_MARKET_TERMS = {
-    "uk", "united kingdom", "great britain", "gb",
-    "england", "scotland", "wales", "northern ireland",
-}
 
 # Category pages to pull listing links from. The numeric IDs in each path
 # are Collecting Cars' own internal taxonomy IDs for make/model; fragile if
@@ -80,11 +81,11 @@ class CollectingCarsScraper(BaseScraper):
         async with async_playwright() as p:
             browser = await p.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
             try:
-                # slug -> state ("live" | "coming_soon" | "sold"), merged
-                # across every category page (a slug appearing live on one
-                # page always wins over seeing it sold on another, though
-                # that shouldn't happen in practice).
-                slug_states: dict[str, str] = {}
+                # slug -> {"state": "live"|"coming_soon"|"sold", "country": "gb"|...|None},
+                # merged across every category page (a slug appearing live
+                # on one page always wins over seeing it sold on another,
+                # though that shouldn't happen in practice).
+                slug_cards: dict[str, dict] = {}
                 for path in CATEGORY_PATHS:
                     # A fresh tab per category path — confirmed live that
                     # navigating a second category page in the same tab
@@ -106,9 +107,9 @@ class CollectingCarsScraper(BaseScraper):
                             logger.error(f"[CollectingCars] {path}: still Cloudflare-challenged after 3 attempts, skipping")
                             continue
                         found = self._parse_category_cards(html)
-                        for slug, state in found.items():
-                            if slug_states.get(slug) != "live":
-                                slug_states[slug] = state
+                        for slug, card in found.items():
+                            if slug_cards.get(slug, {}).get("state") != "live":
+                                slug_cards[slug] = card
                         logger.info(f"[CollectingCars] {path}: found {len(found)} cards")
                     except Exception as e:
                         logger.error(f"[CollectingCars] Failed to fetch category {path}: {e}")
@@ -117,12 +118,15 @@ class CollectingCarsScraper(BaseScraper):
 
                 page = await browser.new_page(user_agent=self.user_agent)
 
-                sold = {s for s, state in slug_states.items() if state == "sold"}
-                if sold:
-                    logger.info(f"[CollectingCars] Skipping {len(sold)} already-sold lots")
+                skip = {
+                    s for s, card in slug_cards.items()
+                    if card["state"] == "sold" or (card["country"] is not None and card["country"] != "gb")
+                }
+                if skip:
+                    logger.info(f"[CollectingCars] Skipping {len(skip)} sold/non-UK lots")
 
-                for slug, state in slug_states.items():
-                    if state == "sold":
+                for slug in slug_cards:
+                    if slug in skip:
                         continue
                     try:
                         listing = await self._fetch_listing(page, slug)
@@ -137,20 +141,23 @@ class CollectingCarsScraper(BaseScraper):
         return all_listings
 
     @staticmethod
-    def _parse_category_cards(html: str) -> dict[str, str]:
-        """Extract {slug: state} from a category page. State is read off
-        each card's own text ("Current bid..." = live, "Coming Soon" =
-        coming_soon, "Sold..." = sold) rather than the individual listing
-        page, since a Sold lot stays linked from the category page's Sold
-        carousel long after the sale — reading it here is what lets a sold
-        lot be skipped before ever fetching its page.
+    def _parse_category_cards(html: str) -> dict[str, dict]:
+        """Extract {slug: {"state": ..., "country": ...}} from a category
+        page. State is read off each card's own text ("Current bid..." =
+        live, "Coming Soon" = coming_soon, "Sold..." = sold) rather than
+        the individual listing page, since a Sold lot stays linked from
+        the category page's Sold carousel long after the sale — reading it
+        here is what lets a sold lot be skipped before ever fetching its
+        page. Country is the 2-letter code off the card's own
+        `flagcdn.com/<cc>.svg` flag image, lowercased; None if no flag
+        image was found on this card.
         """
         soup = BeautifulSoup(html, "lxml")
-        states: dict[str, str] = {}
+        cards: dict[str, dict] = {}
         for a in soup.select('a[href*="/for-sale/"]'):
             href = a.get("href") or ""
             slug = href.rsplit("/for-sale/", 1)[-1].strip("/")
-            if not slug or slug in states:
+            if not slug or slug in cards:
                 continue
             # Each card sits in a <swiper-slide> element — sometimes the
             # tag itself, sometimes a div carrying a "swiper-slide*" class
@@ -174,8 +181,16 @@ class CollectingCarsScraper(BaseScraper):
                 # Benefit of the doubt when the slide wrapper wasn't found
                 # or its text is ambiguous — same pattern as the year gate.
                 state = "live"
-            states[slug] = state
-        return states
+
+            country = None
+            flag_img = slide.select_one('img[src*="flagcdn.com/"]') if slide else None
+            if flag_img and flag_img.get("src"):
+                match = re.search(r"flagcdn\.com/([a-z]{2})\.svg", flag_img["src"])
+                if match:
+                    country = match.group(1)
+
+            cards[slug] = {"state": state, "country": country}
+        return cards
 
     async def _fetch_listing(self, page, slug: str) -> RawListing | None:
         url = f"{BASE_URL}/for-sale/{slug}"
@@ -204,14 +219,10 @@ class CollectingCarsScraper(BaseScraper):
         year = parse_year(title)
         make, model = extract_make_model(title, year)
 
-        # DB9-only constraint (the hunt is specifically a UK "55 plate"
-        # car) — the 996 Turbo hunt has no country restriction, so this
-        # must not reject non-UK listings of anything else.
-        original_market = spec.get("original market")
-        if model == "DB9" and original_market and original_market.strip().lower() not in UK_MARKET_TERMS:
-            logger.info(f"[CollectingCars] Skipping {slug}: non-UK original market ({original_market!r})")
-            return None
-
+        # Non-UK listings are already dropped at discovery time (the
+        # category-page flag check in scrape_listings), so no country
+        # check needed here — "original market"/"registration" are just
+        # kept as a location hint when present.
         mileage, mileage_unit = parse_mileage(spec.get("mileage")) if spec.get("mileage") else (None, "miles")
 
         price = None
@@ -251,7 +262,7 @@ class CollectingCarsScraper(BaseScraper):
             mileage_unit=mileage_unit,
             color=spec.get("exterior"),
             transmission=None,
-            location=original_market or spec.get("registration"),
+            location=spec.get("original market") or spec.get("registration"),
             description=description,
             image_urls=image_urls,
         )
