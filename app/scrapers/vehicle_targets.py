@@ -4,14 +4,14 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Two hunts currently tracked:
+Two hunts currently tracked, both under £30k:
 - Aston Martin DB9, UK "55 plate" only (registered Sept 2005-Feb 2006).
   Any body style — coupe or Volante, per explicit request to stop
   restricting to Volante only. Later years and the DB9 GT/facelift are
-  still excluded via the year gate. No budget given — uncapped.
-- Porsche 911 (996) Turbo, under £30k. Matched on "911"+"turbo" rather
-  than requiring the literal "996" chassis code in the title — classified
-  ad titles (AutoTrader etc.) routinely omit it — and disambiguated from
+  still excluded via the year gate.
+- Porsche 911 (996) Turbo. Matched on "911"+"turbo" rather than
+  requiring the literal "996" chassis code in the title — classified ad
+  titles (AutoTrader etc.) routinely omit it — and disambiguated from
   every other 911 Turbo generation (930/964/993/997/991/992) via the
   2000-2005 year gate instead, same "benefit of the doubt when unknown"
   pattern as DB9.
@@ -25,6 +25,7 @@ import re
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
 DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
     ("Porsche", "996 Turbo"): 30_000,
+    ("Aston Martin", "DB9"): 30_000,
 }
 
 # Mileage ceiling — global (not per-vehicle, unlike price) since no hunt

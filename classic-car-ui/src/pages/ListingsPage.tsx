@@ -19,7 +19,9 @@ export default function ListingsPage() {
   const [sortBy, setSortBy] = useState('score');
   const [page, setPage] = useState(1);
 
-  const params: Record<string, string | number> = { sort_by: sortBy, page, per_page: 25 };
+  // Top options only by default — sorted by score, so page 1 is the best
+  // 10 candidates rather than a near-complete dump of every active match.
+  const params: Record<string, string | number> = { sort_by: sortBy, page, per_page: 10 };
   if (make) params.make = make;
   if (model) params.model = model;
   if (minScore) params.min_score = minScore;
