@@ -80,28 +80,26 @@ class CollectingCarsScraper(BaseScraper):
         async with async_playwright() as p:
             browser = await p.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
             try:
-                page = await browser.new_page(user_agent=self.user_agent)
-
                 # slug -> state ("live" | "coming_soon" | "sold"), merged
                 # across every category page (a slug appearing live on one
                 # page always wins over seeing it sold on another, though
                 # that shouldn't happen in practice).
                 slug_states: dict[str, str] = {}
                 for path in CATEGORY_PATHS:
+                    # A fresh tab per category path — confirmed live that
+                    # navigating a second category page in the same tab
+                    # that already loaded one gets permanently Cloudflare-
+                    # challenged (even across retries), while the exact
+                    # same URL in a brand-new tab on the same browser loads
+                    # clean first try. Listing-detail fetches don't hit
+                    # this, so they stay on a shared tab below.
+                    cat_page = await browser.new_page(user_agent=self.user_agent)
                     try:
                         html = ""
-                        # Cloudflare's challenge resolves client-side and
-                        # usually clears within 6s, but confirmed live it
-                        # occasionally still shows "Just a moment..." after
-                        # that — retrying a couple of times catches it,
-                        # which matters a lot more now than it used to:
-                        # a dud fetch here used to just under-report new
-                        # listings, but now it would also make every
-                        # not-rediscovered listing look sold.
                         for attempt in range(3):
-                            await page.goto(urljoin(BASE_URL, path), timeout=30000, wait_until="domcontentloaded")
-                            await page.wait_for_timeout(6000)
-                            html = await page.content()
+                            await cat_page.goto(urljoin(BASE_URL, path), timeout=30000, wait_until="domcontentloaded")
+                            await cat_page.wait_for_timeout(6000)
+                            html = await cat_page.content()
                             if "Just a moment" not in html:
                                 break
                         else:
@@ -114,6 +112,10 @@ class CollectingCarsScraper(BaseScraper):
                         logger.info(f"[CollectingCars] {path}: found {len(found)} cards")
                     except Exception as e:
                         logger.error(f"[CollectingCars] Failed to fetch category {path}: {e}")
+                    finally:
+                        await cat_page.close()
+
+                page = await browser.new_page(user_agent=self.user_agent)
 
                 sold = {s for s, state in slug_states.items() if state == "sold"}
                 if sold:
