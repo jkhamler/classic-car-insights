@@ -16,6 +16,11 @@ SEED_VEHICLES = [
     # mainstream-classifieds-only source list in seed.py's SEED_SOURCES
     # below.
     VehicleCreate(make="Mercedes-Benz", model="SL350", year_start=2012, year_end=2015, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.5L V6 (BlueEFFICIENCY)"),
+    # Mercedes-Benz SL400, 2015-2019 — the facelifted R231's name for the
+    # same 3.0L V6 biturbo slot, added to compare directly against SL350
+    # (cross-shopped as the "safer long-term bet" question) under the same
+    # £18k/80k-mile/private/dark-over-light/Harman Kardon/AIRSCARF criteria.
+    VehicleCreate(make="Mercedes-Benz", model="SL400", year_start=2015, year_end=2019, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.0L V6 Biturbo"),
 ]
 
 # Mainstream classifieds only — the SL350 hunt is a mainstream
