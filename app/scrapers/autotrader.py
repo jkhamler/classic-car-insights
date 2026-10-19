@@ -1,9 +1,10 @@
-"""AutoTrader UK — the mainstream national marketplace, deliberately added
-despite the platform's usual niche-only bias: for DB9 specifically, the
-cheap end of the market (sub-£25k) turned out to sit almost entirely on
-mainstream aggregators, and AutoTrader is the only one of those that's
-actually scrapeable (Car & Classic and Cazoo are both behind bot-challenge
-walls; eBay 403s).
+"""AutoTrader UK — the mainstream national marketplace. For the SL350
+hunt specifically (a mainstream depreciation-curve car, not a collector
+piece) this is the single best discovery source: ordinary dealer and
+private-seller stock, not specialist auction houses. AutoTrader is also
+the only mainstream aggregator confirmed actually scrapeable (Car & Classic
+and Cazoo are both behind bot-challenge walls; eBay 403s; Copart UK is
+behind an Imperva/hCaptcha wall too).
 
 Search results are rendered client-side (no data in the initial HTML), so
 this uses Playwright instead of plain httpx — the one scraper in this
@@ -13,7 +14,8 @@ change on every AutoTrader deploy, so those are avoided entirely.
 
 Nationwide search: a fixed central postcode with a 1500-mile radius (more
 than the UK's longest possible span), so results aren't biased toward one
-region. Confirmed live: 83 UK results for "DB9" alone, ~21 per page.
+region. Confirmed live: 433 UK results for "Mercedes-Benz SL" alone (every
+SL trim/year — the make+model year/badge gate narrows this down).
 """
 import asyncio
 import logging
@@ -36,20 +38,13 @@ SEARCH_RADIUS_MILES = 1500
 MAX_PAGES = 5
 
 # (make, model) pairs as AutoTrader's own search taxonomy spells them.
-# "DB9" covers coupe, Volante, and every model year — extract_make_model()'s
-# volante+year gate narrows it down to the single tracked hunt after fetching.
-# "911" similarly covers every 911 generation/trim — extract_make_model()'s
-# "911"+"turbo"+year gate narrows it down to 996 Turbo only after fetching.
-# Jaguar XK spans three separate AutoTrader model values — confirmed live
-# "XK" (the later X150), "XK8" and "XKR" (the earlier X100) are distinct
-# taxonomy entries, not one dropdown — extract_make_model()'s year gate
-# narrows all three down to 2005-2006 only after fetching.
+# "SL" covers every SL-Class generation and trim (SL55, SL63, SL500,
+# SL350, etc.) — confirmed live via car-search?make=Mercedes-Benz&model=SL
+# (433 results, titles include e.g. "3.7 SL350 2dr"). extract_make_model()'s
+# "SL"+"350"+year gate narrows it down to the single tracked R231
+# (2012-2015) SL350 hunt after fetching.
 SEARCHES = [
-    ("Aston Martin", "DB9"),
-    ("Porsche", "911"),
-    ("Jaguar", "XK"),
-    ("Jaguar", "XK8"),
-    ("Jaguar", "XKR"),
+    ("Mercedes-Benz", "SL"),
 ]
 
 

@@ -18,48 +18,12 @@ scheduler = AsyncIOScheduler()
 
 
 def setup_scheduler():
-    # Benchmark scraper — daily, staggered
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["bring_a_trailer"], id="scrape_bring_a_trailer",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["bring_a_trailer_uk"], id="scrape_bring_a_trailer_uk",
-    )
-    # Discovery scrapers — daily, staggered
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["trade_classics"], id="scrape_trade_classics",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["hampson_marketplace"], id="scrape_hampson_marketplace",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["mathewsons"], id="scrape_mathewsons",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["historics"], id="scrape_historics",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["anglia_car_auctions"], id="scrape_anglia_car_auctions",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["morris_leslie"], id="scrape_morris_leslie",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["manor_park"], id="scrape_manor_park",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["charterhouse"], id="scrape_charterhouse",
-    )
+    # Mainstream discovery scrapers only — the SL350 hunt dropped every
+    # niche classic-auction and marque-specialist source (and the Bring a
+    # Trailer benchmark source) as dead weight; see seed.py's SEED_SOURCES
+    # comment for the full rationale. Only sources seeded as Source rows
+    # should be scheduled here, since BaseScraper.run() raises if the
+    # matching Source row doesn't exist.
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),
         args=["gumtree"], id="scrape_gumtree",
@@ -70,23 +34,7 @@ def setup_scheduler():
     )
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),
-        args=["prestige_automotives"], id="scrape_prestige_automotives",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["amoc"], id="scrape_amoc",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["nicholas_mee"], id="scrape_nicholas_mee",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
         args=["autotrader"], id="scrape_autotrader",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["collecting_cars"], id="scrape_collecting_cars",
     )
     # Nightly re-scoring at 3 AM
     scheduler.add_job(

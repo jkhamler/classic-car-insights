@@ -40,7 +40,7 @@ export default function ListingsPage() {
           <label className="mb-1 block text-xs font-medium text-slate-500">Make</label>
           <input
             value={make} onChange={(e) => { setMake(e.target.value); setPage(1); }}
-            placeholder="e.g. Porsche"
+            placeholder="e.g. Mercedes-Benz"
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
           />
         </div>

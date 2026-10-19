@@ -6,102 +6,31 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Aston Martin DB9, UK "55 plate" only (Sept 2005-Feb 2006). Any body
-    # style — coupe or Volante. Under £30k (discovery price ceiling in
-    # vehicle_targets.py).
-    VehicleCreate(make="Aston Martin", model="DB9", year_start=2005, year_end=2006, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="V12 (5.9L)"),
-    # Porsche 911 (996) Turbo, 2000-2005. Under £30k (discovery price
-    # ceiling in vehicle_targets.py). Verified live/coming-soon lots only —
-    # Collecting Cars drops anything already Sold before it's even fetched.
-    VehicleCreate(make="Porsche", model="996 Turbo", year_start=2000, year_end=2005, country_of_origin="Germany", segment="sports car", body_style="coupe/cabriolet", engine_type="3.6L twin-turbo flat-6"),
-    # Jaguar XK (XK8/XKR/X150 XK pooled as one), 2005-2006 only. Under £10k
-    # and under 70k miles (discovery price/mileage ceilings in
-    # vehicle_targets.py) — the mileage cap stands in for "really good
-    # condition" per explicit request.
-    VehicleCreate(make="Jaguar", model="XK", year_start=2005, year_end=2006, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe/convertible", engine_type="4.2L V8 (XK8) / supercharged 4.2L V8 (XKR)"),
+    # Mercedes-Benz SL350 BlueEFFICIENCY (R231 generation), 2012-2015 only.
+    # Under £18k (discovery price ceiling in vehicle_targets.py). Replaces
+    # the previous enthusiast/collector hunts (DB9, 996 Turbo, Jaguar XK)
+    # per explicit request — this is a mainstream depreciation-curve car,
+    # not a collector piece, hence the mainstream-classifieds-only source
+    # list in seed.py's SEED_SOURCES below.
+    VehicleCreate(make="Mercedes-Benz", model="SL350", year_start=2012, year_end=2015, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.5L V6 (BlueEFFICIENCY)"),
 ]
 
+# Mainstream classifieds only — the SL350 hunt is a mainstream
+# depreciation-curve car, not a collector piece, so the niche classic-
+# auction houses (Trade Classics, Hampson, Mathewsons, Historics, Anglia,
+# Morris Leslie, Manor Park, Charterhouse, Collecting Cars) and marque-club/
+# specialist sources (AMOC, Nicholas Mee, Prestige Automotives) dropped
+# here carry essentially zero SL350 stock. Bring a Trailer (both the US
+# site and UK hub) is dropped too as a benchmark source for the same
+# reason — it's a US-skewed enthusiast/collector auction site with little
+# to no SL350 BlueEFFICIENCY comp volume; benchmark_calculator.py's
+# existing fallback (median of live active-listing asking prices, any
+# source) stands in as the fair-value baseline instead, which is the
+# honest comparison for a car like this anyway. A Copart UK salvage source
+# was considered (user is open to salvage) but dropped — it sits behind an
+# Imperva/hCaptcha bot wall, confirmed live, and SYNETIQ no longer runs a
+# public vehicle-for-sale search (parts only now).
 SEED_SOURCES = [
-    SourceCreate(
-        name="bring_a_trailer",
-        display_name="Bring a Trailer (UK)",
-        source_type="benchmark",
-        base_url="https://bringatrailer.com",
-        scraper_class="BringATrailerScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="bring_a_trailer_uk",
-        display_name="Bring a Trailer (UK Hub)",
-        source_type="benchmark",
-        base_url="https://bringatrailer.com/uk",
-        scraper_class="BringATrailerUKScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="trade_classics",
-        display_name="Trade Classics",
-        source_type="discovery",
-        base_url="https://www.tradeclassics.com",
-        scraper_class="TradeClassicsScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="hampson_marketplace",
-        display_name="Hampson Marketplace",
-        source_type="discovery",
-        base_url="https://hampson.go-auction.com",
-        scraper_class="HampsonMarketplaceScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="mathewsons",
-        display_name="Mathewsons",
-        source_type="discovery",
-        base_url="https://www.mathewsons.co.uk",
-        scraper_class="MathewsonsScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="historics",
-        display_name="Historics Auctioneers",
-        source_type="discovery",
-        base_url="https://www.historics.co.uk",
-        scraper_class="HistoricsScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="anglia_car_auctions",
-        display_name="Anglia Car Auctions",
-        source_type="discovery",
-        base_url="https://www.angliacarauctions.co.uk",
-        scraper_class="AngliaCarAuctionsScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="morris_leslie",
-        display_name="Morris Leslie Auctions",
-        source_type="discovery",
-        base_url="https://auction.morrisleslie.com",
-        scraper_class="MorrisLeslieScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="manor_park",
-        display_name="Manor Park Classics",
-        source_type="discovery",
-        base_url="https://www.manorparkclassics.com",
-        scraper_class="ManorParkScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="charterhouse",
-        display_name="Charterhouse Auctioneers",
-        source_type="discovery",
-        base_url="https://charterhouse-cars.com",
-        scraper_class="CharterhouseScraper",
-        scrape_frequency_minutes=360,
-    ),
     SourceCreate(
         name="gumtree",
         display_name="Gumtree",
@@ -119,43 +48,11 @@ SEED_SOURCES = [
         scrape_frequency_minutes=360,
     ),
     SourceCreate(
-        name="prestige_automotives",
-        display_name="Prestige Automotives (Japanese Import Specialist)",
-        source_type="discovery",
-        base_url="https://www.prestige-automotives.co.uk",
-        scraper_class="PrestigeAutomotivesScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="amoc",
-        display_name="Aston Martin Owners Club Classifieds",
-        source_type="discovery",
-        base_url="https://amoc.org",
-        scraper_class="AMOCScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="nicholas_mee",
-        display_name="Nicholas Mee & Co (Aston Martin Specialist)",
-        source_type="discovery",
-        base_url="https://www.nicholasmee.co.uk",
-        scraper_class="NicholasMeeScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
         name="autotrader",
         display_name="AutoTrader UK",
         source_type="discovery",
         base_url="https://www.autotrader.co.uk",
         scraper_class="AutoTraderScraper",
-        scrape_frequency_minutes=360,
-    ),
-    SourceCreate(
-        name="collecting_cars",
-        display_name="Collecting Cars",
-        source_type="discovery",
-        base_url="https://collectingcars.com",
-        scraper_class="CollectingCarsScraper",
         scrape_frequency_minutes=360,
     ),
 ]

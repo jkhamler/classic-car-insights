@@ -4,22 +4,20 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Three hunts currently tracked:
-- Aston Martin DB9, UK "55 plate" only (registered Sept 2005-Feb 2006),
-  under £30k. Any body style — coupe or Volante, per explicit request to
-  stop restricting to Volante only. Later years and the DB9 GT/facelift
-  are still excluded via the year gate.
-- Porsche 911 (996) Turbo, under £30k. Matched on "911"+"turbo" rather
-  than requiring the literal "996" chassis code in the title — classified
-  ad titles (AutoTrader etc.) routinely omit it — and disambiguated from
-  every other 911 Turbo generation (930/964/993/997/991/992) via the
-  2000-2005 year gate instead, same "benefit of the doubt when unknown"
-  pattern as DB9.
-- Jaguar XK, 2005-2006 only, under £10k and under 70k miles ("really
-  good condition" proxied by a mileage ceiling — the one hunt so far
-  that needs one). Covers XK8, XKR and the plain-"XK" X150 facelift
-  (AutoTrader's own taxonomy splits these into three separate model
-  values) as one pooled "XK" label.
+One hunt currently tracked:
+- Mercedes-Benz SL350 BlueEFFICIENCY (R231 generation), 2012-2015 only,
+  under £18k. Unlike the enthusiast/collector hunts this replaced (DB9,
+  996 Turbo, Jaguar XK — all dropped per explicit request), this is a
+  mainstream depreciation-curve car: plentiful supply, no scarcity premium,
+  bought/sold through ordinary classifieds rather than specialist auction
+  houses. Matched on "SL" + "350" together rather than requiring the
+  literal "BlueEFFICIENCY" badge text, since that's an efficiency-package
+  name Mercedes used broadly across its range and dealers often drop it
+  from listing titles even when the car has it (it was effectively
+  standard on every post-2012 SL350). Disambiguated from the visually
+  identical R230-generation SL350 (2006-2011, same "SL350" badge, older
+  shape) via the 2012-2015 year gate instead, same "benefit of the doubt
+  when unknown" pattern as every other hunt here.
 """
 import re
 
@@ -29,16 +27,12 @@ import re
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
 DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
-    ("Porsche", "996 Turbo"): 30_000,
-    ("Aston Martin", "DB9"): 30_000,
-    ("Jaguar", "XK"): 10_000,
+    ("Mercedes-Benz", "SL350"): 18_000,
 }
 
 # Per-(make, model-label) discovery mileage ceilings, same shape/rationale
 # as the price ceilings above. Omit a vehicle here for no ceiling.
-DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {
-    ("Jaguar", "XK"): 70_000,
-}
+DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {}
 
 
 def discovery_price_ceiling(make: str | None, model: str | None) -> float | None:
@@ -54,26 +48,18 @@ def discovery_mileage_ceiling(make: str | None, model: str | None) -> float | No
 
 # Order matters: more specific keys must come before substrings they contain.
 MAKE_MAP: dict[str, str] = {
-    "aston martin": "Aston Martin",
-    "aston-martin": "Aston Martin",
-    "porsche": "Porsche",
-    "jaguar": "Jaguar",
+    "mercedes-benz": "Mercedes-Benz",
+    "mercedes benz": "Mercedes-Benz",
+    "mercedes": "Mercedes-Benz",
 }
 
-# Any DB9 — coupe or Volante. Year gate applied separately below (can't
-# express "AND year in range" as a single independent tuple entry the way
-# MODEL_PATTERNS_BY_MAKE works, since that needs post-match logic) — see
-# extract_make_model().
-DB9_RE = re.compile(r"\bdb\s*-?\s*9\b")
-
-# "911" and "turbo" anywhere in the title, either order — not "996" itself,
-# since classified titles often drop the chassis code. Year gate (below)
-# does the real generation disambiguation.
-PORSCHE_911_TURBO_RE = re.compile(r"(?=.*\b911\b)(?=.*\bturbo\b)")
-
-# "XK", "XK8" or "XKR" as a whole word — not "XKE" (an old colloquial
-# name for the E-Type, which must not match).
-JAGUAR_XK_RE = re.compile(r"\bxk(?:8|r)?\b")
+# "SL" and "350" together, either side of optional whitespace/hyphen — not
+# the literal "BlueEFFICIENCY" badge text (see module docstring). Word-
+# bounded on both ends so it doesn't match "SL 3500" or a stray "350"
+# elsewhere in the title, and doesn't match other SL derivatives (SL55,
+# SL63, SL500, SL400, SL350 CDI diesel-era siblings like SL250/SL280).
+# Year gate (below) does the real generation disambiguation.
+MERCEDES_SL350_RE = re.compile(r"\bsl\s*-?\s*350\b")
 
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
 
@@ -103,37 +89,17 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
         if re.search(pattern, lowered):
             return make, label
 
-    if make == "Aston Martin":
-        if DB9_RE.search(lowered):
+    if make == "Mercedes-Benz":
+        if MERCEDES_SL350_RE.search(lowered):
             if year is None:
                 title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
                 year = int(title_year_match.group(1)) if title_year_match else None
-            # "55 plate" = registered Sept 2005-Feb 2006. Listings almost
-            # never state the plate age code directly, so year (2005 or
-            # 2006) is the best available proxy — give an undated listing
-            # the benefit of the doubt rather than silently dropping it,
-            # same pattern used for every other year-gated model here.
-            if year is None or 2005 <= year <= 2006:
-                return make, "DB9"
-
-    if make == "Porsche":
-        if PORSCHE_911_TURBO_RE.search(lowered):
-            if year is None:
-                title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
-                year = int(title_year_match.group(1)) if title_year_match else None
-            # 996 generation ran 2000-2005; this is what actually tells a
-            # 996 Turbo apart from a 993/997/991/992 Turbo, since the title
-            # text often doesn't say "996" at all.
-            if year is None or 2000 <= year <= 2005:
-                return make, "996 Turbo"
-
-    if make == "Jaguar":
-        if JAGUAR_XK_RE.search(lowered):
-            if year is None:
-                title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
-                year = int(title_year_match.group(1)) if title_year_match else None
-            if year is None or 2005 <= year <= 2006:
-                return make, "XK"
+            # R231 generation ran 2012-2015 under the SL350 badge (later
+            # renamed SL400); this is what tells it apart from the
+            # visually-similar R230-generation SL350 (2006-2011), since
+            # the badge text alone is identical across both.
+            if year is None or 2012 <= year <= 2015:
+                return make, "SL350"
 
     return make, None
 
@@ -145,15 +111,11 @@ def is_target_vehicle(title: str | None, year: int | None = None) -> bool:
 
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
-    "aston+martin+db9",
-    "porsche+911+turbo",
-    "jaguar+xk",
+    "mercedes-benz+sl350",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
 # relying on is_target_vehicle() as the real filter after fetching.
 SEARCH_MAKES_ONLY = [
-    "Aston Martin",
-    "Porsche",
-    "Jaguar",
+    "Mercedes-Benz",
 ]

@@ -1,7 +1,17 @@
 """Gumtree scraper — general classifieds, poorly cross-shopped by car dealers
 who focus on specialist sites, which is exactly where cars "fall through
 the cracks". Trade listings are kept (not just private) since Japanese-import
-grey-import specialists are almost always small trade dealers."""
+grey-import specialists are almost always small trade dealers.
+
+Card markup is matched on `[data-q="search-result"]` with no tag name —
+confirmed live these are `<div data-testid="rh-standard-card-listing"
+data-q="search-result">`, not `<article>`; the original `article[...]`
+selector silently matched nothing. Separately, confirmed live that Gumtree
+sometimes serves an empty PerimeterX-style JS challenge shell (HTTP 247,
+~450 bytes, no card markup at all) instead of real results on a given
+fetch — a 0-result run isn't necessarily a real zero-result day; it can
+just mean this one fetch got challenged. No attempt is made to solve or
+bypass that challenge."""
 import logging
 from urllib.parse import urljoin, quote
 
@@ -44,7 +54,7 @@ class GumtreeScraper(BaseScraper):
         soup = BeautifulSoup(html, "lxml")
         listings = []
 
-        for card in soup.select('article[data-q="search-result"]'):
+        for card in soup.select('[data-q="search-result"]'):
             try:
                 link_el = card.select_one('a[data-q="search-result-anchor"][href]')
                 if not link_el:
