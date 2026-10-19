@@ -133,6 +133,7 @@ class PistonHeadsScraper(BaseScraper):
                 color=spec.get("colour"),
                 seller_type=self._seller_type(seller.get("sellerType")),
                 location=seller.get("location"),
+                description=obj.get("shortDescription"),
                 image_urls=obj.get("fullSizeImageUrls") or [],
                 auction_end_at=self._parse_iso(auction.get("endDateTime")) if is_auction else None,
             ))

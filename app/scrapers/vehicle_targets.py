@@ -6,18 +6,22 @@ models" filter, applied uniformly regardless of source.
 
 One hunt currently tracked:
 - Mercedes-Benz SL350 BlueEFFICIENCY (R231 generation), 2012-2015 only,
-  under £18k. Unlike the enthusiast/collector hunts this replaced (DB9,
-  996 Turbo, Jaguar XK — all dropped per explicit request), this is a
-  mainstream depreciation-curve car: plentiful supply, no scarcity premium,
-  bought/sold through ordinary classifieds rather than specialist auction
-  houses. Matched on "SL" + "350" together rather than requiring the
-  literal "BlueEFFICIENCY" badge text, since that's an efficiency-package
-  name Mercedes used broadly across its range and dealers often drop it
-  from listing titles even when the car has it (it was effectively
-  standard on every post-2012 SL350). Disambiguated from the visually
-  identical R230-generation SL350 (2006-2011, same "SL350" badge, older
-  shape) via the 2012-2015 year gate instead, same "benefit of the doubt
-  when unknown" pattern as every other hunt here.
+  under £18k, under 80k miles, private sellers only. Unlike the
+  enthusiast/collector hunts this replaced (DB9, 996 Turbo, Jaguar XK —
+  all dropped per explicit request), this is a mainstream depreciation-
+  curve car: plentiful supply, no scarcity premium, bought/sold through
+  ordinary classifieds rather than specialist auction houses. Matched on
+  "SL" + "350" together rather than requiring the literal "BlueEFFICIENCY"
+  badge text, since that's an efficiency-package name Mercedes used
+  broadly across its range and dealers often drop it from listing titles
+  even when the car has it (it was effectively standard on every
+  post-2012 SL350). Disambiguated from the visually identical
+  R230-generation SL350 (2006-2011, same "SL350" badge, older shape) via
+  the 2012-2015 year gate instead, same "benefit of the doubt when
+  unknown" pattern as every other hunt here. Also requires, via
+  DISCOVERY_REQUIRED_TEXT_GROUPS below: a dark exterior colour, a light
+  interior, Harman Kardon audio, and AIRSCARF — all text-matched against
+  the ad's own title/description, per explicit request.
 """
 import re
 
@@ -32,7 +36,18 @@ DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
 
 # Per-(make, model-label) discovery mileage ceilings, same shape/rationale
 # as the price ceilings above. Omit a vehicle here for no ceiling.
-DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {}
+DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {
+    ("Mercedes-Benz", "SL350"): 80_000,
+}
+
+# Per-(make, model-label) required seller type for discovery sources —
+# "private" or "trade". Like the ceilings above, this gives a listing the
+# benefit of the doubt when the source couldn't determine seller type at
+# all (None) rather than excluding it; it only excludes a listing whose
+# seller type is positively known and doesn't match.
+DISCOVERY_SELLER_TYPE_REQUIRED: dict[tuple[str, str], str] = {
+    ("Mercedes-Benz", "SL350"): "private",
+}
 
 
 def discovery_price_ceiling(make: str | None, model: str | None) -> float | None:
@@ -45,6 +60,67 @@ def discovery_mileage_ceiling(make: str | None, model: str | None) -> float | No
     if not make or not model:
         return None
     return DISCOVERY_MILEAGE_CEILINGS_MILES.get((make, model))
+
+
+def discovery_seller_type_required(make: str | None, model: str | None) -> str | None:
+    if not make or not model:
+        return None
+    return DISCOVERY_SELLER_TYPE_REQUIRED.get((make, model))
+
+
+# Light-interior phrasing is generated from colour x furnishing-noun
+# combinations rather than hand-listing every phrase, since sellers
+# describe the same interior as "cream leather", "cream interior" or
+# "cream upholstery" interchangeably.
+_LIGHT_INTERIOR_COLOURS = [
+    "cream", "beige", "tan", "sand", "almond", "ivory", "porcelain",
+    "stone", "light grey", "light gray", "two-tone", "two tone",
+]
+_LIGHT_INTERIOR_NOUNS = ["interior", "leather", "upholstery", "trim"]
+
+# Required-feature/condition text groups — every group must have at least
+# one synonym present somewhere in the listing's available text (title +
+# description, where fetched — see each scraper's module docstring for
+# what text it actually captures) for a listing to qualify. Unlike the
+# price/mileage ceilings above, this can only be checked against free
+# text: none of the three sources expose exterior colour, interior
+# colour, or factory options as structured fields consistently enough to
+# filter on directly (PistonHeads exposes exterior colour structurally;
+# AutoTrader and Gumtree don't at all). A listing whose seller simply
+# didn't mention one of these in the ad text gets excluded even if the
+# car genuinely qualifies — a real coverage gap, not a design choice;
+# there's no more reliable signal available from any of these sources
+# short of OCR'ing photos. Omit a vehicle here for no text requirement.
+DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[list[str]]] = {
+    ("Mercedes-Benz", "SL350"): [
+        # dark exterior
+        [
+            "black", "obsidian", "anthracite", "graphite", "tenorite",
+            "selenite grey", "selenite gray", "dark grey", "dark gray",
+            "charcoal",
+        ],
+        # light interior
+        [f"{colour} {noun}" for colour in _LIGHT_INTERIOR_COLOURS for noun in _LIGHT_INTERIOR_NOUNS],
+        # premium audio
+        ["harman kardon", "harman/kardon", "harman-kardon"],
+        # neck-level heating
+        ["airscarf", "air scarf"],
+    ],
+}
+
+
+def discovery_required_text_groups(make: str | None, model: str | None) -> list[list[str]] | None:
+    if not make or not model:
+        return None
+    return DISCOVERY_REQUIRED_TEXT_GROUPS.get((make, model))
+
+
+def meets_required_text(make: str | None, model: str | None, *texts: str | None) -> bool:
+    groups = discovery_required_text_groups(make, model)
+    if not groups:
+        return True
+    combined = " ".join(t for t in texts if t).lower()
+    return all(any(synonym in combined for synonym in group) for group in groups)
 
 # Order matters: more specific keys must come before substrings they contain.
 MAKE_MAP: dict[str, str] = {

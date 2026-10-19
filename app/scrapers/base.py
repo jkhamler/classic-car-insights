@@ -16,6 +16,7 @@ from app.db.models.source import Source
 from app.schemas.listing import ListingCreate
 from app.scrapers.vehicle_targets import (
     is_target_vehicle, discovery_price_ceiling, discovery_mileage_ceiling,
+    discovery_seller_type_required, meets_required_text,
 )
 
 logger = logging.getLogger(__name__)
@@ -110,6 +111,13 @@ class BaseScraper(ABC):
                         mileage_miles = raw.mileage * 0.621371 if raw.mileage_unit == "km" else raw.mileage
                         if mileage_miles > mileage_ceiling:
                             continue
+                if self.source.source_type == "discovery" and raw.seller_type is not None:
+                    required_seller = discovery_seller_type_required(raw.make, raw.model)
+                    if required_seller is not None and raw.seller_type != required_seller:
+                        continue
+                if self.source.source_type == "discovery":
+                    if not meets_required_text(raw.make, raw.model, raw.title, raw.description, raw.color):
+                        continue
                 try:
                     listing_data = ListingCreate(
                         source_id=self.source.id,
