@@ -9,6 +9,7 @@ from app.db.models.listing import Listing
 from app.db.models.source import Source
 from app.crud.benchmarks import get_latest_benchmark
 from app.crud.listings import count_active_for_vehicle
+from app.scrapers.vehicle_targets import matched_bonus_features
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,16 @@ WEIGHTS = {
     "freshness": 0.10,
     "source_quality": 0.05,
 }
+
+# Added on top of the weighted total (not one of WEIGHTS above) per matched
+# optional feature from vehicle_targets.DISCOVERY_BONUS_TEXT_GROUPS — e.g.
+# Harman Kardon/AIRSCARF for the SL350/SL400 hunt, loosened from a hard
+# discovery-time exclusion to this scoring bonus since almost no seller
+# spells either out in ad text even when fitted, which was producing zero
+# live matches. Additive rather than one of the weighted categories so it
+# doesn't dilute price/mileage/trend/etc. for vehicles with no bonus groups
+# defined at all.
+FEATURE_BONUS_POINTS = 5.0
 
 
 @dataclass
@@ -204,6 +215,11 @@ def compute_score(db: Session, listing: Listing) -> ScoreBreakdown | None:
         parts.append(f"low mileage ({listing.mileage:,} {listing.mileage_unit})")
 
     explanation = ". ".join(parts) + "." if parts else "Score based on available data."
+
+    bonus_features = matched_bonus_features(listing.make, listing.model, listing.title, listing.description, listing.color)
+    if bonus_features:
+        total = round(min(100.0, total + FEATURE_BONUS_POINTS * len(bonus_features)), 1)
+        explanation = f"+{', '.join(bonus_features)} confirmed in listing. " + explanation
 
     # A cheap price with an explicit fault mentioned in the text is not a
     # bargain — it's priced that way for a reason. Penalize rather than

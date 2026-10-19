@@ -31,9 +31,15 @@ Unlike the enthusiast/collector hunts both of these replaced (DB9, 996
 Turbo, Jaguar XK — all dropped per explicit request), this is a mainstream
 depreciation-curve car: plentiful supply, no scarcity premium, bought/sold
 through ordinary classifieds rather than specialist auction houses. Both
-require, via DISCOVERY_REQUIRED_TEXT_GROUPS below: a dark exterior colour,
-a light interior, Harman Kardon audio, and AIRSCARF — all text-matched
-against the ad's own title/description, per explicit request.
+hard-require, via DISCOVERY_REQUIRED_TEXT_GROUPS below: a dark exterior
+colour and a light interior — excluded at discovery if the ad text doesn't
+mention them, per explicit request. Harman Kardon audio and AIRSCARF were
+originally hard-required too, but that produced zero live matches (too few
+sellers spell either out in ad text even when fitted), so per explicit
+follow-up they're DISCOVERY_BONUS_TEXT_GROUPS instead: still text-matched
+the same way, but only add to a matching listing's score (see
+scoring.py's FEATURE_BONUS_POINTS) rather than excluding a listing that
+doesn't mention them.
 """
 import re
 
@@ -115,16 +121,39 @@ _SL_REQUIRED_TEXT_GROUPS = [
     ],
     # light interior
     [f"{colour} {noun}" for colour in _LIGHT_INTERIOR_COLOURS for noun in _LIGHT_INTERIOR_NOUNS],
-    # premium audio
-    ["harman kardon", "harman/kardon", "harman-kardon"],
-    # neck-level heating
-    ["airscarf", "air scarf"],
 ]
 
 DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[list[str]]] = {
     ("Mercedes-Benz", "SL350"): _SL_REQUIRED_TEXT_GROUPS,
     ("Mercedes-Benz", "SL400"): _SL_REQUIRED_TEXT_GROUPS,
 }
+
+# Desirable-but-not-gating features — each (label, synonyms) pair is
+# text-matched the same way as the required groups above, but a listing
+# that doesn't mention one is scored, not excluded (see scoring.py's
+# FEATURE_BONUS_POINTS). label is the human-readable name shown in a
+# listing's score explanation when matched.
+_SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str]]] = [
+    ("Harman Kardon audio", ["harman kardon", "harman/kardon", "harman-kardon"]),
+    ("AIRSCARF", ["airscarf", "air scarf"]),
+]
+
+DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str]]]] = {
+    ("Mercedes-Benz", "SL350"): _SL_BONUS_TEXT_GROUPS,
+    ("Mercedes-Benz", "SL400"): _SL_BONUS_TEXT_GROUPS,
+}
+
+
+def matched_bonus_features(make: str | None, model: str | None, *texts: str | None) -> list[str]:
+    """Labels of bonus feature groups (see DISCOVERY_BONUS_TEXT_GROUPS) found
+    in the given texts — used to add a scoring bonus, never to exclude."""
+    if not make or not model:
+        return []
+    groups = DISCOVERY_BONUS_TEXT_GROUPS.get((make, model))
+    if not groups:
+        return []
+    combined = " ".join(t for t in texts if t).lower()
+    return [label for label, synonyms in groups if any(s in combined for s in synonyms)]
 
 
 def discovery_required_text_groups(make: str | None, model: str | None) -> list[list[str]] | None:
