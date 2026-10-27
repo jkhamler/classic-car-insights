@@ -12,31 +12,28 @@ was tracked alongside SL400 earlier for a direct cross-shop comparison,
 but was dropped per explicit follow-up once the user settled on SL400 as
 the only model of interest.
 
-Under £24k (raised from £18k once live AutoTrader/Gumtree/PistonHeads data
-showed every real SL400 currently for sale asks £19k-£35k — the original
-£18k ceiling was below the entire live market, not just the cheap end of
-it) and 80k miles. Mainstream depreciation-curve car: plentiful supply,
-no scarcity premium, bought/sold through ordinary classifieds rather than
-specialist auction houses — hence the mainstream-classifieds-only source
-list in seed.py, not niche/enthusiast sources.
+Under £25k (raised twice from £18k once live AutoTrader/Gumtree/
+PistonHeads data showed every real SL400 currently for sale asks
+£19k-£35k — the original £18k ceiling was below the entire live market,
+not just the cheap end of it) and 80k miles. These two are the only
+remaining hard discovery-time gates. Mainstream depreciation-curve car:
+plentiful supply, no scarcity premium, bought/sold through ordinary
+classifieds rather than specialist auction houses — hence the mainstream-
+classifieds-only source list in seed.py, not niche/enthusiast sources.
 
-Hard-requires, via DISCOVERY_REQUIRED_TEXT_GROUPS below, only a dark
-exterior colour — excluded at discovery if the ad text doesn't mention
-it. Everything else the user cares about is a scoring bonus rather than
-a gate, via DISCOVERY_BONUS_TEXT_GROUPS (text-matched) and
+Everything else the user cares about is a scoring bonus rather than a
+gate, via DISCOVERY_BONUS_TEXT_GROUPS (text-matched) and
 DISCOVERY_SELLER_TYPE_BONUS (structured seller_type field) below — both
 only add to a matching listing's score via scoring.py's compute_score,
-never exclude a listing that doesn't match:
-- Light interior (20pts) and private seller (20pts) were both originally
-  hard-required too, but moved here per explicit request once each one
-  was shown to be excluding essentially all real supply on its own — a
-  live AutoTrader sweep found every current SL400 for sale (10/10) is
-  trade stock, so private-only alone was excluding 100% of the market.
-  Both get the larger 20pt value since they matter far more to the user
-  than Harman Kardon/AIRSCARF (5pts each), which were the first to move
-  here (dark-exterior-and-light-interior-both-required produced zero
-  live matches at the time, before the seller-type problem was even
-  found).
+never exclude a listing that doesn't match. All four (dark exterior,
+light interior, private seller, Harman Kardon/AIRSCARF) were hard-
+required at first; each moved here in turn, per explicit request, once
+it was shown to be excluding essentially all real supply on its own — a
+live AutoTrader sweep found every current SL400 for sale (10/10) is
+trade stock, and separately that only one real candidate (out of 10) had
+a confirmed dark exterior at all. Dark exterior, light interior, and
+private seller each get 20pts; Harman Kardon/AIRSCARF get 5pts each,
+since they matter far less to the user than the other three.
 """
 import re
 
@@ -46,7 +43,7 @@ import re
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
 DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
-    ("Mercedes-Benz", "SL400"): 24_000,
+    ("Mercedes-Benz", "SL400"): 25_000,
 }
 
 # Per-(make, model-label) discovery mileage ceilings, same shape/rationale
@@ -126,54 +123,42 @@ _LIGHT_INTERIOR_NOUNS = ["interior", "leather", "upholstery", "trim"]
 # treating as a match before this exclusion existed.
 _INTERIOR_CONTEXT_WORDS = ["interior", "leather", "upholstery", "trim", "seat", "piped", "stitch"]
 
-# Required-feature/condition text groups — every group must have at least
-# one synonym present somewhere in the listing's available text (title +
-# description, where fetched — see each scraper's module docstring for
-# what text it actually captures) for a listing to qualify, and not every
-# occurrence of a matched synonym immediately followed by one of
-# exclude_near counts (see meets_required_text). Unlike the price/mileage
-# ceilings above, this can only be checked against free text: none of the
-# three sources expose exterior colour, interior colour, or factory
-# options as structured fields consistently enough to filter on directly
-# (PistonHeads exposes exterior colour structurally; AutoTrader and
-# Gumtree don't at all). A listing whose seller simply didn't mention one
-# of these in the ad text gets excluded even if the car genuinely
-# qualifies — a real coverage gap, not a design choice; there's no more
-# reliable signal available from any of these sources short of OCR'ing
-# photos. Omit a vehicle here for no text requirement.
-_SL_REQUIRED_TEXT_GROUPS: list[tuple[list[str], list[str]]] = [
-    # dark exterior — exclude_near guards against "black leather interior"
-    # etc. counting as the exterior colour.
+# No hard text requirements for SL400 — dark exterior was the last one
+# standing, but moved to DISCOVERY_BONUS_TEXT_GROUPS below per explicit
+# request ("colours are points not hard blockers"), alongside light
+# interior, which made the same move earlier. Omit a vehicle here for no
+# text requirement; the shape (list of (synonyms, exclude_near) tuples,
+# all required) still supports a future hunt that needs a genuine hard
+# gate.
+DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list[str]]]] = {}
+
+# Desirable-but-not-gating features — each (label, synonyms, points,
+# exclude_near) is text-matched (title + description, where fetched — see
+# each scraper's module docstring for what text it actually captures), but
+# a listing that doesn't mention one is scored, not excluded (see
+# scoring.py's compute_score, which sums `points` for every matched
+# group). label is the human-readable name shown in a listing's score
+# explanation when matched. exclude_near works the same as in
+# meets_required_text — a synonym occurrence doesn't count if an
+# exclude_near word follows before the next " with " (guards against
+# "black leather interior" counting as a dark EXTERIOR mention; see
+# _synonym_matches_outside_context). None of these are gates any more:
+# light interior and dark exterior were both hard-required at first, then
+# moved here in turn, each per explicit request once it was shown to be
+# excluding essentially all real supply on its own.
+_SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str], float, list[str]]] = [
     (
-        [
-            "black", "obsidian", "anthracite", "graphite", "tenorite",
-            "selenite grey", "selenite gray", "dark grey", "dark gray",
-            "charcoal",
-        ],
+        "Dark exterior",
+        ["black", "obsidian", "anthracite", "graphite", "tenorite", "selenite grey", "selenite gray", "dark grey", "dark gray", "charcoal"],
+        20.0,
         _INTERIOR_CONTEXT_WORDS,
     ),
+    ("Light interior", [f"{colour} {noun}" for colour in _LIGHT_INTERIOR_COLOURS for noun in _LIGHT_INTERIOR_NOUNS], 20.0, []),
+    ("Harman Kardon audio", ["harman kardon", "harman/kardon", "harman-kardon"], 5.0, []),
+    ("AIRSCARF", ["airscarf", "air scarf"], 5.0, []),
 ]
 
-DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list[str]]]] = {
-    ("Mercedes-Benz", "SL400"): _SL_REQUIRED_TEXT_GROUPS,
-}
-
-# Desirable-but-not-gating features — each (label, synonyms, points) is
-# text-matched the same way as the required groups above, but a listing
-# that doesn't mention one is scored, not excluded (see scoring.py's
-# compute_score, which sums `points` for every matched group). label is
-# the human-readable name shown in a listing's score explanation when
-# matched. Light interior was moved here from DISCOVERY_REQUIRED_TEXT_GROUPS
-# (dropped as a hard gate, per explicit request) and given a much larger
-# points value than Harman Kardon/AIRSCARF to reflect it mattering far
-# more than those two.
-_SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str], float]] = [
-    ("Light interior", [f"{colour} {noun}" for colour in _LIGHT_INTERIOR_COLOURS for noun in _LIGHT_INTERIOR_NOUNS], 20.0),
-    ("Harman Kardon audio", ["harman kardon", "harman/kardon", "harman-kardon"], 5.0),
-    ("AIRSCARF", ["airscarf", "air scarf"], 5.0),
-]
-
-DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str], float]]] = {
+DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str], float, list[str]]]] = {
     ("Mercedes-Benz", "SL400"): _SL_BONUS_TEXT_GROUPS,
 }
 
@@ -188,7 +173,11 @@ def matched_bonus_features(make: str | None, model: str | None, *texts: str | No
     if not groups:
         return []
     combined = " ".join(t for t in texts if t).lower()
-    return [(label, points) for label, synonyms, points in groups if any(s in combined for s in synonyms)]
+    return [
+        (label, points)
+        for label, synonyms, points, exclude_near in groups
+        if any(_synonym_matches_outside_context(combined, s, exclude_near) for s in synonyms)
+    ]
 
 
 def discovery_required_text_groups(make: str | None, model: str | None) -> list[tuple[list[str], list[str]]] | None:
