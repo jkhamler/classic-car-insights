@@ -10,8 +10,8 @@ which rejects unrecognized (non-persisted) queries.
 
 Only the first page of results per URL is available this way (~16 listings);
 paging further requires that same gated API. /buy/mercedes-benz/sl covers
-every SL trim/year (not just the tracked SL350), so unlike the narrower
-single-model hunts this previously tracked, a given scrape may miss SL350s
+every SL trim/year (not just the tracked SL400), so unlike the narrower
+single-model hunts this previously tracked, a given scrape may miss SL400s
 sorted past page one if pricier/newer SL trims (AMG SL63 etc.) crowd the
 front — acceptable for now since AutoTrader and Gumtree cover the same
 ground without that limit.

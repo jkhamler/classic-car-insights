@@ -1,4 +1,4 @@
-"""AutoTrader UK — the mainstream national marketplace. For the SL350
+"""AutoTrader UK — the mainstream national marketplace. For the SL400
 hunt specifically (a mainstream depreciation-curve car, not a collector
 piece) this is the single best discovery source: ordinary dealer and
 private-seller stock, not specialist auction houses. AutoTrader is also
@@ -39,10 +39,10 @@ MAX_PAGES = 5
 
 # (make, model) pairs as AutoTrader's own search taxonomy spells them.
 # "SL" covers every SL-Class generation and trim (SL55, SL63, SL500,
-# SL350, etc.) — confirmed live via car-search?make=Mercedes-Benz&model=SL
+# SL400, etc.) — confirmed live via car-search?make=Mercedes-Benz&model=SL
 # (433 results, titles include e.g. "3.7 SL350 2dr"). extract_make_model()'s
-# "SL"+"350"+year gate narrows it down to the single tracked R231
-# (2012-2015) SL350 hunt after fetching.
+# "SL"+"400"+year gate narrows it down to the single tracked R231
+# (2015 onwards) SL400 hunt after fetching.
 SEARCHES = [
     ("Mercedes-Benz", "SL"),
 ]

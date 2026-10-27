@@ -20,7 +20,7 @@ order/count), so they're picked out by content shape (a span ending in
 selector. The previous `[data-q="motors-mileage"]` selector never matched
 anything on this site — mileage was silently always None.
 
-Full ad text (needed for the SL350 hunt's required-feature/colour text
+Full ad text (needed for the SL400 hunt's required-feature/colour text
 match — see vehicle_targets.DISCOVERY_REQUIRED_TEXT_GROUPS) only exists on
 the listing's own page, not the search card, same as AutoTrader — fetched
 only for listings that already matched a tracked model, confirmed live via

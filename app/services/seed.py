@@ -6,32 +6,29 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Mercedes-Benz SL350 BlueEFFICIENCY (R231 generation), 2012-2015 only.
-    # Under £18k, under 80k miles, private sellers only, dark exterior over
-    # light interior, Harman Kardon audio, AIRSCARF required (all in
-    # vehicle_targets.py — the price/mileage/seller-type ceilings and the
-    # required-text groups). Replaces the previous enthusiast/collector
-    # hunts (DB9, 996 Turbo, Jaguar XK) per explicit request — this is a
-    # mainstream depreciation-curve car, not a collector piece, hence the
-    # mainstream-classifieds-only source list in seed.py's SEED_SOURCES
-    # below.
-    VehicleCreate(make="Mercedes-Benz", model="SL350", year_start=2012, year_end=2015, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.5L V6 (BlueEFFICIENCY)"),
-    # Mercedes-Benz SL400, 2015-2019 — the facelifted R231's name for the
-    # same 3.0L V6 biturbo slot, added to compare directly against SL350
-    # (cross-shopped as the "safer long-term bet" question) under the same
-    # £18k/80k-mile/private/dark-over-light/Harman Kardon/AIRSCARF criteria.
-    VehicleCreate(make="Mercedes-Benz", model="SL400", year_start=2015, year_end=2019, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.0L V6 Biturbo"),
+    # Mercedes-Benz SL400 (R231 generation), 2015 onwards — open-ended,
+    # no upper year bound, per explicit request. Under £18k, under 80k
+    # miles, private sellers only, dark exterior over light interior hard
+    # gates; Harman Kardon audio and AIRSCARF are a scoring bonus, not a
+    # gate (all in vehicle_targets.py — the price/mileage/seller-type
+    # ceilings and the required/bonus text groups). The only model
+    # tracked now — SL350 was tracked alongside it briefly for a direct
+    # cross-shop comparison, then dropped per explicit follow-up once
+    # SL400 was settled on as the sole model of interest. Mainstream
+    # depreciation-curve car, not a collector piece, hence the mainstream-
+    # classifieds-only source list in seed.py's SEED_SOURCES below.
+    VehicleCreate(make="Mercedes-Benz", model="SL400", year_start=2015, year_end=None, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.0L V6 Biturbo"),
 ]
 
-# Mainstream classifieds only — the SL350 hunt is a mainstream
+# Mainstream classifieds only — the SL400 hunt is a mainstream
 # depreciation-curve car, not a collector piece, so the niche classic-
 # auction houses (Trade Classics, Hampson, Mathewsons, Historics, Anglia,
 # Morris Leslie, Manor Park, Charterhouse, Collecting Cars) and marque-club/
 # specialist sources (AMOC, Nicholas Mee, Prestige Automotives) dropped
-# here carry essentially zero SL350 stock. Bring a Trailer (both the US
+# here carry essentially zero SL400 stock. Bring a Trailer (both the US
 # site and UK hub) is dropped too as a benchmark source for the same
 # reason — it's a US-skewed enthusiast/collector auction site with little
-# to no SL350 BlueEFFICIENCY comp volume; benchmark_calculator.py's
+# to no SL400 comp volume; benchmark_calculator.py's
 # existing fallback (median of live active-listing asking prices, any
 # source) stands in as the fair-value baseline instead, which is the
 # honest comparison for a car like this anyway. A Copart UK salvage source

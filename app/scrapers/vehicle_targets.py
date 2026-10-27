@@ -4,42 +4,28 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Two hunts currently tracked, both R231-generation Mercedes-Benz SL, both
-under the same £18k / 80k-mile / private-seller / dark-exterior-over-
-light-interior / Harman Kardon / AIRSCARF criteria — SL400 was added as a
-second badge variant to compare directly against SL350 (the two are cross-
-shopped as the "safer long-term bet" question), not as a separate hunt with
-its own budget:
-- Mercedes-Benz SL350 BlueEFFICIENCY, 2012-2015 only. Matched on "SL" +
-  "350" together rather than requiring the literal "BlueEFFICIENCY" badge
-  text, since that's an efficiency-package name Mercedes used broadly
-  across its range and dealers often drop it from listing titles even when
-  the car has it (it was effectively standard on every post-2012 SL350).
-  Disambiguated from the visually identical R230-generation SL350
-  (2006-2011, same "SL350" badge, older shape) via the 2012-2015 year gate
-  instead, same "benefit of the doubt when unknown" pattern as every other
-  hunt here.
-- Mercedes-Benz SL400, 2015-2019. The facelifted R231's name for the same
-  3.0L V6 biturbo slot SL350 occupied pre-facelift — same bodyshell/options
-  list, no R230-era "SL400" badge to disambiguate against (unlike SL350),
-  so the year gate here is mainly to exclude the later SL450 rebadge
-  (2018+ in some markets) rather than a genuine lookalike risk. Treated as
-  an open bound (2015-2019) rather than a tight one since UK market badge-
-  switch timing varies by source/dealer.
+One hunt currently tracked: Mercedes-Benz SL400 (R231 generation), 2015
+onwards, open-ended — no upper year bound, per explicit request, so a
+later facelift year doesn't silently age out of the hunt the way a closed
+range would. SL350 (the pre-facelift badge for the same 3.0L-era V6 slot)
+was tracked alongside SL400 earlier for a direct cross-shop comparison,
+but was dropped per explicit follow-up once the user settled on SL400 as
+the only model of interest.
 
-Unlike the enthusiast/collector hunts both of these replaced (DB9, 996
-Turbo, Jaguar XK — all dropped per explicit request), this is a mainstream
-depreciation-curve car: plentiful supply, no scarcity premium, bought/sold
-through ordinary classifieds rather than specialist auction houses. Both
-hard-require, via DISCOVERY_REQUIRED_TEXT_GROUPS below: a dark exterior
-colour and a light interior — excluded at discovery if the ad text doesn't
-mention them, per explicit request. Harman Kardon audio and AIRSCARF were
-originally hard-required too, but that produced zero live matches (too few
-sellers spell either out in ad text even when fitted), so per explicit
-follow-up they're DISCOVERY_BONUS_TEXT_GROUPS instead: still text-matched
-the same way, but only add to a matching listing's score (see
-scoring.py's FEATURE_BONUS_POINTS) rather than excluding a listing that
-doesn't mention them.
+Under the same £18k / 80k-mile / private-seller / dark-exterior-over-
+light-interior criteria as before. Mainstream depreciation-curve car:
+plentiful supply, no scarcity premium, bought/sold through ordinary
+classifieds rather than specialist auction houses — hence the mainstream-
+classifieds-only source list in seed.py, not niche/enthusiast sources.
+Hard-requires, via DISCOVERY_REQUIRED_TEXT_GROUPS below: a dark exterior
+colour and a light interior — excluded at discovery if the ad text
+doesn't mention them. Harman Kardon audio and AIRSCARF were originally
+hard-required too, but that produced zero live matches (too few sellers
+spell either out in ad text even when fitted), so they're
+DISCOVERY_BONUS_TEXT_GROUPS instead: still text-matched the same way, but
+only add to a matching listing's score (see scoring.py's
+FEATURE_BONUS_POINTS) rather than excluding a listing that doesn't
+mention them.
 """
 import re
 
@@ -49,14 +35,12 @@ import re
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
 DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
-    ("Mercedes-Benz", "SL350"): 18_000,
     ("Mercedes-Benz", "SL400"): 18_000,
 }
 
 # Per-(make, model-label) discovery mileage ceilings, same shape/rationale
 # as the price ceilings above. Omit a vehicle here for no ceiling.
 DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {
-    ("Mercedes-Benz", "SL350"): 80_000,
     ("Mercedes-Benz", "SL400"): 80_000,
 }
 
@@ -66,7 +50,6 @@ DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {
 # all (None) rather than excluding it; it only excludes a listing whose
 # seller type is positively known and doesn't match.
 DISCOVERY_SELLER_TYPE_REQUIRED: dict[tuple[str, str], str] = {
-    ("Mercedes-Benz", "SL350"): "private",
     ("Mercedes-Benz", "SL400"): "private",
 }
 
@@ -124,7 +107,6 @@ _SL_REQUIRED_TEXT_GROUPS = [
 ]
 
 DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[list[str]]] = {
-    ("Mercedes-Benz", "SL350"): _SL_REQUIRED_TEXT_GROUPS,
     ("Mercedes-Benz", "SL400"): _SL_REQUIRED_TEXT_GROUPS,
 }
 
@@ -139,7 +121,6 @@ _SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str]]] = [
 ]
 
 DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str]]]] = {
-    ("Mercedes-Benz", "SL350"): _SL_BONUS_TEXT_GROUPS,
     ("Mercedes-Benz", "SL400"): _SL_BONUS_TEXT_GROUPS,
 }
 
@@ -176,22 +157,18 @@ MAKE_MAP: dict[str, str] = {
     "mercedes": "Mercedes-Benz",
 }
 
-# "SL" and the badge number together, either side of optional whitespace/
-# hyphen — not the literal "BlueEFFICIENCY" badge text (see module
-# docstring). Word-bounded on both ends so it doesn't match "SL 3500" or a
-# stray "350"/"400" elsewhere in the title, and doesn't match other SL
-# derivatives (SL55, SL63, SL500, SL350 CDI diesel-era siblings like
-# SL250/SL280, SL450/SL500 post-2018 rebadges). Year gate (below) does the
-# real generation disambiguation.
-MERCEDES_SL350_RE = re.compile(r"\bsl\s*-?\s*350\b")
+# "SL" and "400" together, either side of optional whitespace/hyphen.
+# Word-bounded on both ends so it doesn't match "SL 4000" or a stray "400"
+# elsewhere in the title, and doesn't match other SL derivatives (SL55,
+# SL63, SL500, SL350). Year gate (below) does the real generation
+# disambiguation.
 MERCEDES_SL400_RE = re.compile(r"\bsl\s*-?\s*400\b")
 
-# (regex, label, year_start, year_end) — checked in order; year gate uses
-# the same "benefit of the doubt when year unknown" rule as every other
-# hunt here.
-MERCEDES_SL_MODELS: list[tuple[re.Pattern, str, int, int]] = [
-    (MERCEDES_SL350_RE, "SL350", 2012, 2015),
-    (MERCEDES_SL400_RE, "SL400", 2015, 2019),
+# (regex, label, year_start, year_end) — checked in order; year_end=None
+# means open-ended (no upper bound). year gate uses the same "benefit of
+# the doubt when year unknown" rule as every other hunt here.
+MERCEDES_SL_MODELS: list[tuple[re.Pattern, str, int, int | None]] = [
+    (MERCEDES_SL400_RE, "SL400", 2015, None),
 ]
 
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
@@ -228,7 +205,7 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
                 if year is None:
                     title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
                     year = int(title_year_match.group(1)) if title_year_match else None
-                if year is None or year_start <= year <= year_end:
+                if year is None or (year >= year_start and (year_end is None or year <= year_end)):
                     return make, label
 
     return make, None
@@ -241,7 +218,6 @@ def is_target_vehicle(title: str | None, year: int | None = None) -> bool:
 
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
-    "mercedes-benz+sl350",
     "mercedes-benz+sl400",
 ]
 

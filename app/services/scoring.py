@@ -24,7 +24,7 @@ WEIGHTS = {
 
 # Added on top of the weighted total (not one of WEIGHTS above) per matched
 # optional feature from vehicle_targets.DISCOVERY_BONUS_TEXT_GROUPS — e.g.
-# Harman Kardon/AIRSCARF for the SL350/SL400 hunt, loosened from a hard
+# Harman Kardon/AIRSCARF for the SL400 hunt, loosened from a hard
 # discovery-time exclusion to this scoring bonus since almost no seller
 # spells either out in ad text even when fitted, which was producing zero
 # live matches. Additive rather than one of the weighted categories so it

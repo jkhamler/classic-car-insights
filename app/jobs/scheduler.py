@@ -18,7 +18,7 @@ scheduler = AsyncIOScheduler()
 
 
 def setup_scheduler():
-    # Mainstream discovery scrapers only — the SL350 hunt dropped every
+    # Mainstream discovery scrapers only — the SL400 hunt dropped every
     # niche classic-auction and marque-specialist source (and the Bring a
     # Trailer benchmark source) as dead weight; see seed.py's SEED_SOURCES
     # comment for the full rationale. Only sources seeded as Source rows
