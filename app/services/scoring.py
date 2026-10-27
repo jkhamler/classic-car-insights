@@ -23,10 +23,11 @@ WEIGHTS = {
 }
 
 # Bonus points (per matched vehicle_targets.DISCOVERY_BONUS_TEXT_GROUPS
-# feature, e.g. light interior/Harman Kardon/AIRSCARF for the SL400 hunt)
-# are added on top of the weighted total below, not one of the WEIGHTS
-# above — additive so it doesn't dilute price/mileage/trend/etc. for
-# vehicles with no bonus groups defined at all. The per-feature point
+# feature, e.g. white exterior/dark interior/Harman Kardon/AIRSCARF for
+# the SL400 hunt) are added on top of the weighted total below, not one
+# of the WEIGHTS above — additive so it doesn't dilute price/mileage/
+# trend/etc. for vehicles with no bonus groups defined at all. The
+# per-feature point
 # values themselves live in vehicle_targets.py next to each feature.
 
 

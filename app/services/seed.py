@@ -7,14 +7,14 @@ from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
     # Mercedes-Benz SL400 (R231 generation), 2015 onwards — open-ended,
-    # no upper year bound, per explicit request. Under £18k, under 80k
-    # miles, private sellers only, dark exterior over light interior hard
-    # gates; Harman Kardon audio and AIRSCARF are a scoring bonus, not a
-    # gate (all in vehicle_targets.py — the price/mileage/seller-type
-    # ceilings and the required/bonus text groups). The only model
-    # tracked now — SL350 was tracked alongside it briefly for a direct
-    # cross-shop comparison, then dropped per explicit follow-up once
-    # SL400 was settled on as the sole model of interest. Mainstream
+    # no upper year bound, per explicit request. Under £25k and 80k
+    # miles are the only hard discovery-time gates; white exterior over
+    # dark interior, private seller, and Harman Kardon/AIRSCARF are all
+    # scoring bonuses, not gates (all in vehicle_targets.py — the
+    # price/mileage ceilings and the bonus text/seller-type groups). The
+    # only model tracked now — SL350 was tracked alongside it briefly for
+    # a direct cross-shop comparison, then dropped per explicit follow-up
+    # once SL400 was settled on as the sole model of interest. Mainstream
     # depreciation-curve car, not a collector piece, hence the mainstream-
     # classifieds-only source list in seed.py's SEED_SOURCES below.
     VehicleCreate(make="Mercedes-Benz", model="SL400", year_start=2015, year_end=None, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.0L V6 Biturbo"),

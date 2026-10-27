@@ -25,15 +25,18 @@ Everything else the user cares about is a scoring bonus rather than a
 gate, via DISCOVERY_BONUS_TEXT_GROUPS (text-matched) and
 DISCOVERY_SELLER_TYPE_BONUS (structured seller_type field) below — both
 only add to a matching listing's score via scoring.py's compute_score,
-never exclude a listing that doesn't match. All four (dark exterior,
-light interior, private seller, Harman Kardon/AIRSCARF) were hard-
+never exclude a listing that doesn't match. All four (exterior colour,
+interior colour, private seller, Harman Kardon/AIRSCARF) were hard-
 required at first; each moved here in turn, per explicit request, once
 it was shown to be excluding essentially all real supply on its own — a
 live AutoTrader sweep found every current SL400 for sale (10/10) is
 trade stock, and separately that only one real candidate (out of 10) had
-a confirmed dark exterior at all. Dark exterior, light interior, and
-private seller each get 20pts; Harman Kardon/AIRSCARF get 5pts each,
-since they matter far less to the user than the other three.
+a confirmed dark exterior (the colour preference in force at the time).
+The colour preference itself later flipped to white exterior over dark
+interior (originally dark-over-light), per explicit correction — white
+exterior, dark interior, and private seller each get 20pts;
+Harman Kardon/AIRSCARF get 5pts each, since they matter far less to the
+user than the other three.
 """
 import re
 
@@ -105,22 +108,25 @@ def seller_type_bonus_feature(make: str | None, model: str | None, seller_type: 
     return (label, points) if seller_type == preferred_type else None
 
 
-# Light-interior phrasing is generated from colour x furnishing-noun
+# Dark-interior phrasing is generated from colour x furnishing-noun
 # combinations rather than hand-listing every phrase, since sellers
-# describe the same interior as "cream leather", "cream interior" or
-# "cream upholstery" interchangeably.
-_LIGHT_INTERIOR_COLOURS = [
-    "cream", "beige", "tan", "sand", "almond", "ivory", "porcelain",
-    "stone", "light grey", "light gray", "two-tone", "two tone",
+# describe the same interior as "black leather", "black interior" or
+# "black upholstery" interchangeably.
+_DARK_INTERIOR_COLOURS = [
+    "black", "espresso", "dark brown", "graphite", "charcoal", "anthracite",
 ]
-_LIGHT_INTERIOR_NOUNS = ["interior", "leather", "upholstery", "trim"]
+_INTERIOR_NOUNS = ["interior", "leather", "upholstery", "trim"]
 
 # Words that, found immediately after a colour synonym, mean that
-# occurrence is describing the interior trim ("black leather interior")
+# occurrence is describing the interior trim ("white leather interior")
 # rather than the exterior paint — confirmed live via a real AutoTrader ad
-# ("FULL BLACK AND IVORY PIPED LEATHER INTERIOR") on a car whose exterior
-# was actually silver, which the exterior-colour gate below was wrongly
-# treating as a match before this exclusion existed.
+# ("FULL BLACK AND IVORY PIPED LEATHER INTERIOR", back when the preferred
+# exterior colour was dark rather than white) on a car whose exterior
+# didn't actually match, which the exterior-colour match below was
+# wrongly treating as a hit before this exclusion existed. Still needed
+# now the preference is flipped (white exterior over dark interior) —
+# same risk, e.g. "white leather interior" shouldn't count as a white
+# exterior mention.
 _INTERIOR_CONTEXT_WORDS = ["interior", "leather", "upholstery", "trim", "seat", "piped", "stitch"]
 
 # No hard text requirements for SL400 — dark exterior was the last one
@@ -141,19 +147,21 @@ DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list
 # explanation when matched. exclude_near works the same as in
 # meets_required_text — a synonym occurrence doesn't count if an
 # exclude_near word follows before the next " with " (guards against
-# "black leather interior" counting as a dark EXTERIOR mention; see
+# "white leather interior" counting as a white EXTERIOR mention; see
 # _synonym_matches_outside_context). None of these are gates any more:
-# light interior and dark exterior were both hard-required at first, then
-# moved here in turn, each per explicit request once it was shown to be
-# excluding essentially all real supply on its own.
+# interior colour and exterior colour were both hard-required at first,
+# then moved here in turn, each per explicit request once it was shown to
+# be excluding essentially all real supply on its own. The colour
+# preference itself flipped too (white exterior over dark interior,
+# rather than the original dark-over-light) per explicit correction.
 _SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str], float, list[str]]] = [
     (
-        "Dark exterior",
-        ["black", "obsidian", "anthracite", "graphite", "tenorite", "selenite grey", "selenite gray", "dark grey", "dark gray", "charcoal"],
+        "White exterior",
+        ["white", "polar white", "diamond white", "alpine white", "arctic white", "designo white", "ice white"],
         20.0,
         _INTERIOR_CONTEXT_WORDS,
     ),
-    ("Light interior", [f"{colour} {noun}" for colour in _LIGHT_INTERIOR_COLOURS for noun in _LIGHT_INTERIOR_NOUNS], 20.0, []),
+    ("Dark interior", [f"{colour} {noun}" for colour in _DARK_INTERIOR_COLOURS for noun in _INTERIOR_NOUNS], 20.0, []),
     ("Harman Kardon audio", ["harman kardon", "harman/kardon", "harman-kardon"], 5.0, []),
     ("AIRSCARF", ["airscarf", "air scarf"], 5.0, []),
 ]
