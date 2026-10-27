@@ -22,15 +22,12 @@ WEIGHTS = {
     "source_quality": 0.05,
 }
 
-# Added on top of the weighted total (not one of WEIGHTS above) per matched
-# optional feature from vehicle_targets.DISCOVERY_BONUS_TEXT_GROUPS — e.g.
-# Harman Kardon/AIRSCARF for the SL400 hunt, loosened from a hard
-# discovery-time exclusion to this scoring bonus since almost no seller
-# spells either out in ad text even when fitted, which was producing zero
-# live matches. Additive rather than one of the weighted categories so it
-# doesn't dilute price/mileage/trend/etc. for vehicles with no bonus groups
-# defined at all.
-FEATURE_BONUS_POINTS = 5.0
+# Bonus points (per matched vehicle_targets.DISCOVERY_BONUS_TEXT_GROUPS
+# feature, e.g. light interior/Harman Kardon/AIRSCARF for the SL400 hunt)
+# are added on top of the weighted total below, not one of the WEIGHTS
+# above — additive so it doesn't dilute price/mileage/trend/etc. for
+# vehicles with no bonus groups defined at all. The per-feature point
+# values themselves live in vehicle_targets.py next to each feature.
 
 
 @dataclass
@@ -218,8 +215,9 @@ def compute_score(db: Session, listing: Listing) -> ScoreBreakdown | None:
 
     bonus_features = matched_bonus_features(listing.make, listing.model, listing.title, listing.description, listing.color)
     if bonus_features:
-        total = round(min(100.0, total + FEATURE_BONUS_POINTS * len(bonus_features)), 1)
-        explanation = f"+{', '.join(bonus_features)} confirmed in listing. " + explanation
+        total = round(min(100.0, total + sum(points for _, points in bonus_features)), 1)
+        labels = ", ".join(label for label, _ in bonus_features)
+        explanation = f"+{labels} confirmed in listing. " + explanation
 
     # A cheap price with an explicit fault mentioned in the text is not a
     # bargain — it's priced that way for a reason. Penalize rather than

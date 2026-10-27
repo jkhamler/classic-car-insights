@@ -12,20 +12,27 @@ was tracked alongside SL400 earlier for a direct cross-shop comparison,
 but was dropped per explicit follow-up once the user settled on SL400 as
 the only model of interest.
 
-Under the same £18k / 80k-mile / private-seller / dark-exterior-over-
-light-interior criteria as before. Mainstream depreciation-curve car:
+Under £24k (raised from £18k once live AutoTrader/Gumtree/PistonHeads data
+showed every real SL400 currently for sale asks £19k-£35k — the original
+£18k ceiling was below the entire live market, not just the cheap end of
+it), 80k miles, private-seller-only. Mainstream depreciation-curve car:
 plentiful supply, no scarcity premium, bought/sold through ordinary
 classifieds rather than specialist auction houses — hence the mainstream-
 classifieds-only source list in seed.py, not niche/enthusiast sources.
-Hard-requires, via DISCOVERY_REQUIRED_TEXT_GROUPS below: a dark exterior
-colour and a light interior — excluded at discovery if the ad text
-doesn't mention them. Harman Kardon audio and AIRSCARF were originally
-hard-required too, but that produced zero live matches (too few sellers
-spell either out in ad text even when fitted), so they're
-DISCOVERY_BONUS_TEXT_GROUPS instead: still text-matched the same way, but
-only add to a matching listing's score (see scoring.py's
-FEATURE_BONUS_POINTS) rather than excluding a listing that doesn't
-mention them.
+
+Hard-requires, via DISCOVERY_REQUIRED_TEXT_GROUPS below, only a dark
+exterior colour — excluded at discovery if the ad text doesn't mention
+it. Light interior, Harman Kardon audio, and AIRSCARF are all
+DISCOVERY_BONUS_TEXT_GROUPS instead (text-matched the same way, but only
+add to a matching listing's score via scoring.py's compute_score, never
+exclude a listing that doesn't mention them) — light interior was
+originally hard-required alongside dark exterior, but moved here per
+explicit request and given a much larger points value (20, vs 5 each for
+Harman Kardon/AIRSCARF) since it matters far more to the user than those
+two. Harman Kardon/AIRSCARF were moved here earlier for the same reason
+dark-exterior-and-light-interior-both-required produced zero live
+matches at the time (too few sellers spell any of these out in ad text
+even when fitted).
 """
 import re
 
@@ -35,7 +42,7 @@ import re
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
 DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
-    ("Mercedes-Benz", "SL400"): 18_000,
+    ("Mercedes-Benz", "SL400"): 24_000,
 }
 
 # Per-(make, model-label) discovery mileage ceilings, same shape/rationale
@@ -102,39 +109,43 @@ _SL_REQUIRED_TEXT_GROUPS = [
         "selenite grey", "selenite gray", "dark grey", "dark gray",
         "charcoal",
     ],
-    # light interior
-    [f"{colour} {noun}" for colour in _LIGHT_INTERIOR_COLOURS for noun in _LIGHT_INTERIOR_NOUNS],
 ]
 
 DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[list[str]]] = {
     ("Mercedes-Benz", "SL400"): _SL_REQUIRED_TEXT_GROUPS,
 }
 
-# Desirable-but-not-gating features — each (label, synonyms) pair is
+# Desirable-but-not-gating features — each (label, synonyms, points) is
 # text-matched the same way as the required groups above, but a listing
 # that doesn't mention one is scored, not excluded (see scoring.py's
-# FEATURE_BONUS_POINTS). label is the human-readable name shown in a
-# listing's score explanation when matched.
-_SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str]]] = [
-    ("Harman Kardon audio", ["harman kardon", "harman/kardon", "harman-kardon"]),
-    ("AIRSCARF", ["airscarf", "air scarf"]),
+# compute_score, which sums `points` for every matched group). label is
+# the human-readable name shown in a listing's score explanation when
+# matched. Light interior was moved here from DISCOVERY_REQUIRED_TEXT_GROUPS
+# (dropped as a hard gate, per explicit request) and given a much larger
+# points value than Harman Kardon/AIRSCARF to reflect it mattering far
+# more than those two.
+_SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str], float]] = [
+    ("Light interior", [f"{colour} {noun}" for colour in _LIGHT_INTERIOR_COLOURS for noun in _LIGHT_INTERIOR_NOUNS], 20.0),
+    ("Harman Kardon audio", ["harman kardon", "harman/kardon", "harman-kardon"], 5.0),
+    ("AIRSCARF", ["airscarf", "air scarf"], 5.0),
 ]
 
-DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str]]]] = {
+DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str], float]]] = {
     ("Mercedes-Benz", "SL400"): _SL_BONUS_TEXT_GROUPS,
 }
 
 
-def matched_bonus_features(make: str | None, model: str | None, *texts: str | None) -> list[str]:
-    """Labels of bonus feature groups (see DISCOVERY_BONUS_TEXT_GROUPS) found
-    in the given texts — used to add a scoring bonus, never to exclude."""
+def matched_bonus_features(make: str | None, model: str | None, *texts: str | None) -> list[tuple[str, float]]:
+    """(label, points) for every bonus feature group (see
+    DISCOVERY_BONUS_TEXT_GROUPS) found in the given texts — used to add a
+    scoring bonus, never to exclude."""
     if not make or not model:
         return []
     groups = DISCOVERY_BONUS_TEXT_GROUPS.get((make, model))
     if not groups:
         return []
     combined = " ".join(t for t in texts if t).lower()
-    return [label for label, synonyms in groups if any(s in combined for s in synonyms)]
+    return [(label, points) for label, synonyms, points in groups if any(s in combined for s in synonyms)]
 
 
 def discovery_required_text_groups(make: str | None, model: str | None) -> list[list[str]] | None:
