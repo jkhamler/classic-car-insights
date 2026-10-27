@@ -118,29 +118,43 @@ _LIGHT_INTERIOR_COLOURS = [
 ]
 _LIGHT_INTERIOR_NOUNS = ["interior", "leather", "upholstery", "trim"]
 
+# Words that, found immediately after a colour synonym, mean that
+# occurrence is describing the interior trim ("black leather interior")
+# rather than the exterior paint — confirmed live via a real AutoTrader ad
+# ("FULL BLACK AND IVORY PIPED LEATHER INTERIOR") on a car whose exterior
+# was actually silver, which the exterior-colour gate below was wrongly
+# treating as a match before this exclusion existed.
+_INTERIOR_CONTEXT_WORDS = ["interior", "leather", "upholstery", "trim", "seat", "piped", "stitch"]
+
 # Required-feature/condition text groups — every group must have at least
 # one synonym present somewhere in the listing's available text (title +
 # description, where fetched — see each scraper's module docstring for
-# what text it actually captures) for a listing to qualify. Unlike the
-# price/mileage ceilings above, this can only be checked against free
-# text: none of the three sources expose exterior colour, interior
-# colour, or factory options as structured fields consistently enough to
-# filter on directly (PistonHeads exposes exterior colour structurally;
-# AutoTrader and Gumtree don't at all). A listing whose seller simply
-# didn't mention one of these in the ad text gets excluded even if the
-# car genuinely qualifies — a real coverage gap, not a design choice;
-# there's no more reliable signal available from any of these sources
-# short of OCR'ing photos. Omit a vehicle here for no text requirement.
-_SL_REQUIRED_TEXT_GROUPS = [
-    # dark exterior
-    [
-        "black", "obsidian", "anthracite", "graphite", "tenorite",
-        "selenite grey", "selenite gray", "dark grey", "dark gray",
-        "charcoal",
-    ],
+# what text it actually captures) for a listing to qualify, and not every
+# occurrence of a matched synonym immediately followed by one of
+# exclude_near counts (see meets_required_text). Unlike the price/mileage
+# ceilings above, this can only be checked against free text: none of the
+# three sources expose exterior colour, interior colour, or factory
+# options as structured fields consistently enough to filter on directly
+# (PistonHeads exposes exterior colour structurally; AutoTrader and
+# Gumtree don't at all). A listing whose seller simply didn't mention one
+# of these in the ad text gets excluded even if the car genuinely
+# qualifies — a real coverage gap, not a design choice; there's no more
+# reliable signal available from any of these sources short of OCR'ing
+# photos. Omit a vehicle here for no text requirement.
+_SL_REQUIRED_TEXT_GROUPS: list[tuple[list[str], list[str]]] = [
+    # dark exterior — exclude_near guards against "black leather interior"
+    # etc. counting as the exterior colour.
+    (
+        [
+            "black", "obsidian", "anthracite", "graphite", "tenorite",
+            "selenite grey", "selenite gray", "dark grey", "dark gray",
+            "charcoal",
+        ],
+        _INTERIOR_CONTEXT_WORDS,
+    ),
 ]
 
-DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[list[str]]] = {
+DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list[str]]]] = {
     ("Mercedes-Benz", "SL400"): _SL_REQUIRED_TEXT_GROUPS,
 }
 
@@ -177,10 +191,33 @@ def matched_bonus_features(make: str | None, model: str | None, *texts: str | No
     return [(label, points) for label, synonyms, points in groups if any(s in combined for s in synonyms)]
 
 
-def discovery_required_text_groups(make: str | None, model: str | None) -> list[list[str]] | None:
+def discovery_required_text_groups(make: str | None, model: str | None) -> list[tuple[list[str], list[str]]] | None:
     if not make or not model:
         return None
     return DISCOVERY_REQUIRED_TEXT_GROUPS.get((make, model))
+
+
+def _synonym_matches_outside_context(combined: str, synonym: str, exclude_near: list[str]) -> bool:
+    """True if `synonym` occurs in `combined` at least once without one of
+    exclude_near appearing before the next " with " — confirmed-live
+    AutoTrader phrasing distinguishes "black AND IVORY PIPED LEATHER
+    INTERIOR" (an interior colour, no "with" before "leather"/"interior" —
+    doesn't count) from "Finished in Black WITH Black Interior" (a real
+    exterior colour — "with" appears before the later "interior" mention,
+    so it counts, even though the ad goes on to separately describe a
+    black interior too)."""
+    window = 40
+    start = 0
+    while True:
+        idx = combined.find(synonym, start)
+        if idx == -1:
+            return False
+        after = combined[idx + len(synonym):idx + len(synonym) + window]
+        exclude_idx = min((after.find(w) for w in exclude_near if w in after), default=-1)
+        with_idx = after.find(" with ")
+        if exclude_idx == -1 or (with_idx != -1 and with_idx < exclude_idx):
+            return True
+        start = idx + len(synonym)
 
 
 def meets_required_text(make: str | None, model: str | None, *texts: str | None) -> bool:
@@ -188,7 +225,10 @@ def meets_required_text(make: str | None, model: str | None, *texts: str | None)
     if not groups:
         return True
     combined = " ".join(t for t in texts if t).lower()
-    return all(any(synonym in combined for synonym in group) for group in groups)
+    return all(
+        any(_synonym_matches_outside_context(combined, synonym, exclude_near) for synonym in synonyms)
+        for synonyms, exclude_near in groups
+    )
 
 # Order matters: more specific keys must come before substrings they contain.
 MAKE_MAP: dict[str, str] = {
