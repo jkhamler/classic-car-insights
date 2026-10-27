@@ -9,7 +9,7 @@ from app.db.models.listing import Listing
 from app.db.models.source import Source
 from app.crud.benchmarks import get_latest_benchmark
 from app.crud.listings import count_active_for_vehicle
-from app.scrapers.vehicle_targets import matched_bonus_features
+from app.scrapers.vehicle_targets import matched_bonus_features, seller_type_bonus_feature
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +214,9 @@ def compute_score(db: Session, listing: Listing) -> ScoreBreakdown | None:
     explanation = ". ".join(parts) + "." if parts else "Score based on available data."
 
     bonus_features = matched_bonus_features(listing.make, listing.model, listing.title, listing.description, listing.color)
+    seller_bonus = seller_type_bonus_feature(listing.make, listing.model, listing.seller_type)
+    if seller_bonus:
+        bonus_features = bonus_features + [seller_bonus]
     if bonus_features:
         total = round(min(100.0, total + sum(points for _, points in bonus_features)), 1)
         labels = ", ".join(label for label, _ in bonus_features)

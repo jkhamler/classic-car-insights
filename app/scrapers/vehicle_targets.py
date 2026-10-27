@@ -15,24 +15,28 @@ the only model of interest.
 Under £24k (raised from £18k once live AutoTrader/Gumtree/PistonHeads data
 showed every real SL400 currently for sale asks £19k-£35k — the original
 £18k ceiling was below the entire live market, not just the cheap end of
-it), 80k miles, private-seller-only. Mainstream depreciation-curve car:
-plentiful supply, no scarcity premium, bought/sold through ordinary
-classifieds rather than specialist auction houses — hence the mainstream-
-classifieds-only source list in seed.py, not niche/enthusiast sources.
+it) and 80k miles. Mainstream depreciation-curve car: plentiful supply,
+no scarcity premium, bought/sold through ordinary classifieds rather than
+specialist auction houses — hence the mainstream-classifieds-only source
+list in seed.py, not niche/enthusiast sources.
 
 Hard-requires, via DISCOVERY_REQUIRED_TEXT_GROUPS below, only a dark
 exterior colour — excluded at discovery if the ad text doesn't mention
-it. Light interior, Harman Kardon audio, and AIRSCARF are all
-DISCOVERY_BONUS_TEXT_GROUPS instead (text-matched the same way, but only
-add to a matching listing's score via scoring.py's compute_score, never
-exclude a listing that doesn't mention them) — light interior was
-originally hard-required alongside dark exterior, but moved here per
-explicit request and given a much larger points value (20, vs 5 each for
-Harman Kardon/AIRSCARF) since it matters far more to the user than those
-two. Harman Kardon/AIRSCARF were moved here earlier for the same reason
-dark-exterior-and-light-interior-both-required produced zero live
-matches at the time (too few sellers spell any of these out in ad text
-even when fitted).
+it. Everything else the user cares about is a scoring bonus rather than
+a gate, via DISCOVERY_BONUS_TEXT_GROUPS (text-matched) and
+DISCOVERY_SELLER_TYPE_BONUS (structured seller_type field) below — both
+only add to a matching listing's score via scoring.py's compute_score,
+never exclude a listing that doesn't match:
+- Light interior (20pts) and private seller (20pts) were both originally
+  hard-required too, but moved here per explicit request once each one
+  was shown to be excluding essentially all real supply on its own — a
+  live AutoTrader sweep found every current SL400 for sale (10/10) is
+  trade stock, so private-only alone was excluding 100% of the market.
+  Both get the larger 20pt value since they matter far more to the user
+  than Harman Kardon/AIRSCARF (5pts each), which were the first to move
+  here (dark-exterior-and-light-interior-both-required produced zero
+  live matches at the time, before the seller-type problem was even
+  found).
 """
 import re
 
@@ -55,9 +59,21 @@ DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {
 # "private" or "trade". Like the ceilings above, this gives a listing the
 # benefit of the doubt when the source couldn't determine seller type at
 # all (None) rather than excluding it; it only excludes a listing whose
-# seller type is positively known and doesn't match.
-DISCOVERY_SELLER_TYPE_REQUIRED: dict[tuple[str, str], str] = {
-    ("Mercedes-Benz", "SL400"): "private",
+# seller type is positively known and doesn't match. Empty for SL400 —
+# "private sales only" was hard-required at first, but a live AutoTrader
+# sweep found every current SL400 for sale (10/10) is trade stock, so per
+# explicit request it moved to DISCOVERY_SELLER_TYPE_BONUS below instead:
+# same preference, but scored rather than excluded.
+DISCOVERY_SELLER_TYPE_REQUIRED: dict[tuple[str, str], str] = {}
+
+# Per-(make, model-label) preferred seller type: (label, seller_type,
+# points) — a listing whose structured seller_type field matches gets
+# `points` added to its score the same way a DISCOVERY_BONUS_TEXT_GROUPS
+# match does (see scoring.py's compute_score), but unlike those this
+# checks RawListing.seller_type directly rather than scanning text, since
+# seller type is a structured field on every source, not free text.
+DISCOVERY_SELLER_TYPE_BONUS: dict[tuple[str, str], tuple[str, str, float]] = {
+    ("Mercedes-Benz", "SL400"): ("Private seller", "private", 20.0),
 }
 
 
@@ -77,6 +93,19 @@ def discovery_seller_type_required(make: str | None, model: str | None) -> str |
     if not make or not model:
         return None
     return DISCOVERY_SELLER_TYPE_REQUIRED.get((make, model))
+
+
+def seller_type_bonus_feature(make: str | None, model: str | None, seller_type: str | None) -> tuple[str, float] | None:
+    """(label, points) if this listing's seller_type matches the preferred
+    one in DISCOVERY_SELLER_TYPE_BONUS — used to add a scoring bonus, never
+    to exclude."""
+    if not make or not model or not seller_type:
+        return None
+    entry = DISCOVERY_SELLER_TYPE_BONUS.get((make, model))
+    if not entry:
+        return None
+    label, preferred_type, points = entry
+    return (label, points) if seller_type == preferred_type else None
 
 
 # Light-interior phrasing is generated from colour x furnishing-noun
