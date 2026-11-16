@@ -99,11 +99,31 @@ class BalanceEntry(BaseModel):
     co_owner_id: int
     name: str
     total_contributed: float
+    cash_contributed: float
+    labour_contributed: float
     fair_share: float
     net_balance: float
+
+
+class CategoryTotal(BaseModel):
+    category: str
+    amount: float
+
+
+class Settlement(BaseModel):
+    from_co_owner_id: int
+    from_name: str
+    to_co_owner_id: int
+    to_name: str
+    amount: float
 
 
 class VehicleBalance(BaseModel):
     shared_vehicle_id: int
     currency: str
     entries: list[BalanceEntry]
+    total_spend: float
+    total_cash: float
+    total_labour: float
+    by_category: list[CategoryTotal]
+    settlements: list[Settlement]

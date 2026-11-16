@@ -166,14 +166,34 @@ export interface BalanceEntry {
   co_owner_id: number;
   name: string;
   total_contributed: number;
+  cash_contributed: number;
+  labour_contributed: number;
   fair_share: number;
   net_balance: number;
+}
+
+export interface CategoryTotal {
+  category: string;
+  amount: number;
+}
+
+export interface Settlement {
+  from_co_owner_id: number;
+  from_name: string;
+  to_co_owner_id: number;
+  to_name: string;
+  amount: number;
 }
 
 export interface VehicleBalance {
   shared_vehicle_id: number;
   currency: string;
   entries: BalanceEntry[];
+  total_spend: number;
+  total_cash: number;
+  total_labour: number;
+  by_category: CategoryTotal[];
+  settlements: Settlement[];
 }
 
 export interface ReportRead {

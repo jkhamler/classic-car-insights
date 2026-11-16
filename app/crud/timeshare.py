@@ -3,7 +3,7 @@ from sqlalchemy import desc
 from app.db.models.timeshare import SharedVehicle, CoOwner, VehicleOwner, Booking, Expense
 from app.schemas.timeshare import (
     SharedVehicleCreate, CoOwnerCreate, VehicleOwnerCreate, BookingCreate, ExpenseCreate,
-    BalanceEntry, VehicleBalance,
+    BalanceEntry, VehicleBalance, CategoryTotal, Settlement,
 )
 
 
@@ -140,12 +140,22 @@ def get_vehicle_balance(db: Session, vehicle_id: int) -> VehicleBalance:
 
     currency = expenses[0].currency if expenses else "GBP"
     total_contributed_by_owner = {co_owner_id: 0.0 for co_owner_id in co_owners}
+    cash_by_owner = {co_owner_id: 0.0 for co_owner_id in co_owners}
+    labour_by_owner = {co_owner_id: 0.0 for co_owner_id in co_owners}
+    by_category: dict[str, float] = {}
     for expense in expenses:
         total_contributed_by_owner[expense.co_owner_id] = (
             total_contributed_by_owner.get(expense.co_owner_id, 0.0) + expense.amount
         )
+        if expense.contribution_type == "labour":
+            labour_by_owner[expense.co_owner_id] = labour_by_owner.get(expense.co_owner_id, 0.0) + expense.amount
+        else:
+            cash_by_owner[expense.co_owner_id] = cash_by_owner.get(expense.co_owner_id, 0.0) + expense.amount
+        by_category[expense.category] = by_category.get(expense.category, 0.0) + expense.amount
 
     total_expenses = sum(e.amount for e in expenses)
+    total_cash = sum(cash_by_owner.values())
+    total_labour = sum(labour_by_owner.values())
     num_owners = len(co_owners) or 1
     fair_share = total_expenses / num_owners
 
@@ -154,10 +164,55 @@ def get_vehicle_balance(db: Session, vehicle_id: int) -> VehicleBalance:
             co_owner_id=co_owner_id,
             name=co_owner.name if co_owner else "Unknown",
             total_contributed=total_contributed_by_owner.get(co_owner_id, 0.0),
+            cash_contributed=cash_by_owner.get(co_owner_id, 0.0),
+            labour_contributed=labour_by_owner.get(co_owner_id, 0.0),
             fair_share=fair_share,
-            net_balance=total_contributed_by_owner.get(co_owner_id, 0.0) - fair_share,
+            net_balance=round(total_contributed_by_owner.get(co_owner_id, 0.0) - fair_share, 2),
         )
         for co_owner_id, co_owner in co_owners.items()
     ]
 
-    return VehicleBalance(shared_vehicle_id=vehicle_id, currency=currency, entries=entries)
+    return VehicleBalance(
+        shared_vehicle_id=vehicle_id,
+        currency=currency,
+        entries=entries,
+        total_spend=round(total_expenses, 2),
+        total_cash=round(total_cash, 2),
+        total_labour=round(total_labour, 2),
+        by_category=[
+            CategoryTotal(category=category, amount=round(amount, 2))
+            for category, amount in sorted(by_category.items(), key=lambda kv: -kv[1])
+        ],
+        settlements=_compute_settlements(entries),
+    )
+
+
+def _compute_settlements(entries: list[BalanceEntry]) -> list[Settlement]:
+    """Greedy min-transaction settle-up: each debtor pays down the largest
+    creditor first until every balance nets to zero."""
+    creditors = sorted(
+        ([e.co_owner_id, e.name, e.net_balance] for e in entries if e.net_balance > 0.01),
+        key=lambda c: -c[2],
+    )
+    debtors = sorted(
+        ([e.co_owner_id, e.name, -e.net_balance] for e in entries if e.net_balance < -0.01),
+        key=lambda d: -d[2],
+    )
+
+    settlements: list[Settlement] = []
+    i = j = 0
+    while i < len(debtors) and j < len(creditors):
+        debtor, creditor = debtors[i], creditors[j]
+        amount = min(debtor[2], creditor[2])
+        settlements.append(Settlement(
+            from_co_owner_id=debtor[0], from_name=debtor[1],
+            to_co_owner_id=creditor[0], to_name=creditor[1],
+            amount=round(amount, 2),
+        ))
+        debtor[2] -= amount
+        creditor[2] -= amount
+        if debtor[2] <= 0.01:
+            i += 1
+        if creditor[2] <= 0.01:
+            j += 1
+    return settlements

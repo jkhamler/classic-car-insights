@@ -358,19 +358,59 @@ function BalanceSection({ vehicleId }: { vehicleId: number }) {
   const { data: balance, isLoading } = useQuery({ queryKey: ['timeshare-balance', vehicleId], queryFn: () => fetchVehicleBalance(vehicleId) });
 
   if (isLoading || !balance?.entries.length) return null;
+  const { currency } = balance;
 
   return (
     <div className="space-y-3">
       <h2 className="text-lg font-semibold text-slate-900">Balance</h2>
+
+      {balance.settlements.length > 0 && (
+        <div className="space-y-2">
+          {balance.settlements.map((s, i) => (
+            <div key={i} className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <p className="text-sm font-semibold text-amber-900">
+                {s.from_name} owes {s.to_name}
+              </p>
+              <p className="text-sm font-bold text-amber-900">{currency} {s.amount.toFixed(2)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Total spend</p>
+          <p className="mt-1 text-xl font-bold text-slate-900">{currency} {balance.total_spend.toFixed(2)}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Cash contributed</p>
+          <p className="mt-1 text-xl font-bold text-slate-900">{currency} {balance.total_cash.toFixed(2)}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-slate-500">Labour contributed</p>
+          <p className="mt-1 text-xl font-bold text-slate-900">{currency} {balance.total_labour.toFixed(2)}</p>
+        </div>
+      </div>
+
+      {balance.by_category.length > 0 && (
+        <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          {balance.by_category.map((c) => (
+            <span key={c.category} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              {c.category}: {currency} {c.amount.toFixed(2)}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {balance.entries.map((entry) => (
           <div key={entry.co_owner_id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-900">{entry.name}</p>
-              <BalanceBadge amount={entry.net_balance} currency={balance.currency} />
+              <BalanceBadge amount={entry.net_balance} currency={currency} />
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Contributed {balance.currency} {entry.total_contributed.toFixed(2)} · fair share {balance.currency} {entry.fair_share.toFixed(2)}
+              Contributed {currency} {entry.total_contributed.toFixed(2)} ({currency} {entry.cash_contributed.toFixed(2)} cash · {currency} {entry.labour_contributed.toFixed(2)} labour) · fair share {currency} {entry.fair_share.toFixed(2)}
             </p>
           </div>
         ))}
