@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from app.api import dashboard, listings, vehicles, trends, alerts, reports, scraper_admin
+from app.api import dashboard, listings, vehicles, trends, alerts, reports, scraper_admin, timeshare
 from app.api.health import router as health_router
 from app.jobs.scheduler import lifespan
 
@@ -49,6 +49,7 @@ app.include_router(trends.router, prefix="/api/trends", tags=["trends"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
 app.include_router(scraper_admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(timeshare.router, prefix="/api/timeshare", tags=["timeshare"])
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 if STATIC_DIR.is_dir():

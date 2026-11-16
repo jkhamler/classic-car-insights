@@ -114,6 +114,68 @@ export interface AlertRead {
   created_at: string | null;
 }
 
+export interface SharedVehicle {
+  id: number;
+  name: string;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  registration_plate: string | null;
+  notes: string | null;
+  created_at: string | null;
+}
+
+export interface CoOwner {
+  id: number;
+  name: string;
+  email: string | null;
+  created_at: string | null;
+}
+
+export interface VehicleOwner {
+  id: number;
+  shared_vehicle_id: number;
+  co_owner_id: number;
+  created_at: string | null;
+}
+
+export interface Booking {
+  id: number;
+  shared_vehicle_id: number;
+  co_owner_id: number;
+  start_date: string;
+  end_date: string;
+  notes: string | null;
+  created_at: string | null;
+}
+
+export interface Expense {
+  id: number;
+  shared_vehicle_id: number;
+  co_owner_id: number;
+  contribution_type: 'cash' | 'labour';
+  category: 'insurance' | 'servicing' | 'fuel' | 'other';
+  amount: number;
+  currency: string;
+  expense_date: string;
+  description: string | null;
+  created_at: string | null;
+}
+
+export interface BalanceEntry {
+  co_owner_id: number;
+  name: string;
+  total_contributed: number;
+  fair_share: number;
+  net_balance: number;
+}
+
+export interface VehicleBalance {
+  shared_vehicle_id: number;
+  currency: string;
+  entries: BalanceEntry[];
+}
+
 export interface ReportRead {
   id: number;
   report_type: string;

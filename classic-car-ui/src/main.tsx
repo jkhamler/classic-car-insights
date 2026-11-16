@@ -12,6 +12,7 @@ import VehicleDetailPage from './pages/VehicleDetailPage';
 import TrendsPage from './pages/TrendsPage';
 import AlertsPage from './pages/AlertsPage';
 import ReportsPage from './pages/ReportsPage';
+import TimesharePage from './pages/TimesharePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
       { path: 'trends', element: <TrendsPage /> },
       { path: 'alerts', element: <AlertsPage /> },
       { path: 'reports', element: <ReportsPage /> },
+      { path: 'timeshare', element: <TimesharePage /> },
     ],
   },
 ]);

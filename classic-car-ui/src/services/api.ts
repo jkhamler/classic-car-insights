@@ -2,6 +2,7 @@ import type {
   ListingSummary, ListingDetail, DashboardStats,
   VehicleSummary, PricePoint, MarketMover,
   PaginatedResponse, AlertRead, ReportRead,
+  SharedVehicle, CoOwner, VehicleOwner, Booking, Expense, VehicleBalance,
 } from '../types';
 
 const API = '/api';
@@ -18,7 +19,10 @@ async function post<T>(url: string, body?: unknown): Promise<T> {
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail ?? `API error: ${res.status}`);
+  }
   return res.json();
 }
 
@@ -62,3 +66,26 @@ export const deleteAlert = (id: number) => del(`/alerts/${id}`);
 export const fetchWeeklyDigest = () => get<ReportRead | null>('/reports/weekly');
 export const fetchOpportunityReport = (listingId: number) => get<ReportRead | null>(`/reports/opportunity/${listingId}`);
 export const fetchInvestmentThesis = (vehicleId: number) => get<ReportRead | null>(`/reports/investment-thesis/${vehicleId}`);
+
+// Timeshare
+export const fetchSharedVehicles = () => get<SharedVehicle[]>('/timeshare/vehicles');
+export const createSharedVehicle = (data: Partial<SharedVehicle>) => post<SharedVehicle>('/timeshare/vehicles', data);
+
+export const fetchCoOwners = () => get<CoOwner[]>('/timeshare/co-owners');
+export const createCoOwner = (data: Partial<CoOwner>) => post<CoOwner>('/timeshare/co-owners', data);
+
+export const fetchVehicleOwners = (vehicleId: number) => get<VehicleOwner[]>(`/timeshare/vehicles/${vehicleId}/owners`);
+export const linkOwnerToVehicle = (vehicleId: number, coOwnerId: number) =>
+  post<VehicleOwner>(`/timeshare/vehicles/${vehicleId}/owners`, { co_owner_id: coOwnerId });
+
+export const fetchBookings = (vehicleId: number) => get<Booking[]>(`/timeshare/vehicles/${vehicleId}/bookings`);
+export const createBooking = (vehicleId: number, data: Partial<Booking>) =>
+  post<Booking>(`/timeshare/vehicles/${vehicleId}/bookings`, data);
+export const deleteBooking = (bookingId: number) => del(`/timeshare/bookings/${bookingId}`);
+
+export const fetchExpenses = (vehicleId: number) => get<Expense[]>(`/timeshare/vehicles/${vehicleId}/expenses`);
+export const createExpense = (vehicleId: number, data: Partial<Expense>) =>
+  post<Expense>(`/timeshare/vehicles/${vehicleId}/expenses`, data);
+export const deleteExpense = (expenseId: number) => del(`/timeshare/expenses/${expenseId}`);
+
+export const fetchVehicleBalance = (vehicleId: number) => get<VehicleBalance>(`/timeshare/vehicles/${vehicleId}/balance`);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Search, Car, TrendingUp, Bell, FileText, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Search, Car, TrendingUp, Bell, FileText, Users, Menu, X } from 'lucide-react';
 import clsx from 'clsx';
 
 const links = [
@@ -10,6 +10,7 @@ const links = [
   { to: '/trends', icon: TrendingUp, label: 'Trends' },
   { to: '/alerts', icon: Bell, label: 'Alerts' },
   { to: '/reports', icon: FileText, label: 'Reports' },
+  { to: '/timeshare', icon: Users, label: 'Timeshare' },
 ];
 
 export default function Sidebar() {
