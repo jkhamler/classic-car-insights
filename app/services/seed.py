@@ -6,35 +6,29 @@ from app.schemas.vehicle import VehicleCreate
 from app.schemas.source import SourceCreate
 
 SEED_VEHICLES = [
-    # Mercedes-Benz SL400 (R231 generation), 2015 onwards — open-ended,
-    # no upper year bound, per explicit request. Under £25k and 80k
-    # miles are the only hard discovery-time gates; white exterior over
-    # dark interior, private seller, and Harman Kardon/AIRSCARF are all
-    # scoring bonuses, not gates (all in vehicle_targets.py — the
-    # price/mileage ceilings and the bonus text/seller-type groups). The
-    # only model tracked now — SL350 was tracked alongside it briefly for
-    # a direct cross-shop comparison, then dropped per explicit follow-up
-    # once SL400 was settled on as the sole model of interest. Mainstream
-    # depreciation-curve car, not a collector piece, hence the mainstream-
-    # classifieds-only source list in seed.py's SEED_SOURCES below.
-    VehicleCreate(make="Mercedes-Benz", model="SL400", year_start=2015, year_end=None, country_of_origin="Germany", segment="grand tourer", body_style="convertible", engine_type="3.0L V6 Biturbo"),
+    # Aston Martin "modern classics" selection, per explicit request,
+    # replacing the earlier Mercedes-Benz SL400 hunt. Four distinct
+    # generations, closed year ranges (see vehicle_targets.py for why the
+    # year gate matters here — "Vantage" and "DBS" are both reused Aston
+    # names across eras). No price/mileage ceilings or feature bonuses set
+    # yet for any of these — no budget or preference has been stated, so
+    # undervaluation is left entirely to scoring.py's benchmark comparison.
+    VehicleCreate(make="Aston Martin", model="DB7", year_start=1994, year_end=2003, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe", engine_type="3.2L Supercharged I6 / 5.9L V12 (Vantage)"),
+    VehicleCreate(make="Aston Martin", model="DB9", year_start=2004, year_end=2016, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe", engine_type="5.9L V12"),
+    VehicleCreate(make="Aston Martin", model="V8 Vantage", year_start=2005, year_end=2017, country_of_origin="United Kingdom", segment="sports car", body_style="coupe", engine_type="4.3L/4.7L V8"),
+    VehicleCreate(make="Aston Martin", model="DBS", year_start=2007, year_end=2012, country_of_origin="United Kingdom", segment="grand tourer", body_style="coupe", engine_type="6.0L V12"),
 ]
 
-# Mainstream classifieds only — the SL400 hunt is a mainstream
-# depreciation-curve car, not a collector piece, so the niche classic-
-# auction houses (Trade Classics, Hampson, Mathewsons, Historics, Anglia,
-# Morris Leslie, Manor Park, Charterhouse, Collecting Cars) and marque-club/
-# specialist sources (AMOC, Nicholas Mee, Prestige Automotives) dropped
-# here carry essentially zero SL400 stock. Bring a Trailer (both the US
-# site and UK hub) is dropped too as a benchmark source for the same
-# reason — it's a US-skewed enthusiast/collector auction site with little
-# to no SL400 comp volume; benchmark_calculator.py's
-# existing fallback (median of live active-listing asking prices, any
-# source) stands in as the fair-value baseline instead, which is the
-# honest comparison for a car like this anyway. A Copart UK salvage source
-# was considered (user is open to salvage) but dropped — it sits behind an
-# Imperva/hCaptcha bot wall, confirmed live, and SYNETIQ no longer runs a
-# public vehicle-for-sale search (parts only now).
+# Mix of mainstream classifieds (still worth covering — DB9/V8 Vantage in
+# particular show up on ordinary classifieds, not just specialist
+# channels) and Aston-specific/collector sources, since these are more
+# collector-oriented than the old SL400 depreciation-curve hunt: AMOC
+# (Aston Martin Owners Club classifieds), Nicholas Mee (long-established
+# Aston specialist dealer), and Collecting Cars (enthusiast consignment
+# auction site with strong classic/modern-classic Aston volume). Bring a
+# Trailer is the benchmark source — unlike the SL400 hunt (where it was
+# dropped for near-zero UK SL400 volume), Astons are exactly the kind of
+# car BaT carries good UK-location sold-comp data for.
 SEED_SOURCES = [
     SourceCreate(
         name="gumtree",
@@ -58,6 +52,38 @@ SEED_SOURCES = [
         source_type="discovery",
         base_url="https://www.autotrader.co.uk",
         scraper_class="AutoTraderScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="amoc",
+        display_name="AMOC Classifieds",
+        source_type="discovery",
+        base_url="https://amoc.org",
+        scraper_class="AMOCScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="nicholas_mee",
+        display_name="Nicholas Mee & Co",
+        source_type="discovery",
+        base_url="https://www.nicholasmee.co.uk",
+        scraper_class="NicholasMeeScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="collecting_cars",
+        display_name="Collecting Cars",
+        source_type="discovery",
+        base_url="https://collectingcars.com",
+        scraper_class="CollectingCarsScraper",
+        scrape_frequency_minutes=360,
+    ),
+    SourceCreate(
+        name="bring_a_trailer",
+        display_name="Bring a Trailer (UK)",
+        source_type="benchmark",
+        base_url="https://bringatrailer.com",
+        scraper_class="BringATrailerScraper",
         scrape_frequency_minutes=360,
     ),
 ]

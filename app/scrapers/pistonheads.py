@@ -9,12 +9,8 @@ sellerType ("Private" vs "Trade") — no need for the client-side GraphQL API,
 which rejects unrecognized (non-persisted) queries.
 
 Only the first page of results per URL is available this way (~16 listings);
-paging further requires that same gated API. /buy/mercedes-benz/sl covers
-every SL trim/year (not just the tracked SL400), so unlike the narrower
-single-model hunts this previously tracked, a given scrape may miss SL400s
-sorted past page one if pricier/newer SL trims (AMG SL63 etc.) crowd the
-front — acceptable for now since AutoTrader and Gumtree cover the same
-ground without that limit.
+paging further requires that same gated API — acceptable for now since
+AutoTrader and Gumtree cover the same ground without that limit.
 """
 import json
 import logging
@@ -33,7 +29,10 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://www.pistonheads.com"
 
 MODEL_PATHS = [
-    "/buy/mercedes-benz/sl",
+    "/buy/aston-martin/db7",
+    "/buy/aston-martin/db9",
+    "/buy/aston-martin/vantage",
+    "/buy/aston-martin/dbs",
 ]
 
 # Cross-make browse page for current live auctions — a model-scoped /buy/

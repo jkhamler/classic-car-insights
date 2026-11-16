@@ -18,12 +18,9 @@ scheduler = AsyncIOScheduler()
 
 
 def setup_scheduler():
-    # Mainstream discovery scrapers only — the SL400 hunt dropped every
-    # niche classic-auction and marque-specialist source (and the Bring a
-    # Trailer benchmark source) as dead weight; see seed.py's SEED_SOURCES
-    # comment for the full rationale. Only sources seeded as Source rows
-    # should be scheduled here, since BaseScraper.run() raises if the
-    # matching Source row doesn't exist.
+    # One job per source seeded in seed.py's SEED_SOURCES — only sources
+    # seeded as Source rows should be scheduled here, since
+    # BaseScraper.run() raises if the matching Source row doesn't exist.
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),
         args=["gumtree"], id="scrape_gumtree",
@@ -35,6 +32,22 @@ def setup_scheduler():
     scheduler.add_job(
         run_scraper, IntervalTrigger(hours=24),
         args=["autotrader"], id="scrape_autotrader",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["amoc"], id="scrape_amoc",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["nicholas_mee"], id="scrape_nicholas_mee",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["collecting_cars"], id="scrape_collecting_cars",
+    )
+    scheduler.add_job(
+        run_scraper, IntervalTrigger(hours=24),
+        args=["bring_a_trailer"], id="scrape_bring_a_trailer",
     )
     # Nightly re-scoring at 3 AM
     scheduler.add_job(

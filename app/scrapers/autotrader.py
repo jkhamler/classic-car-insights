@@ -1,10 +1,8 @@
-"""AutoTrader UK — the mainstream national marketplace. For the SL400
-hunt specifically (a mainstream depreciation-curve car, not a collector
-piece) this is the single best discovery source: ordinary dealer and
-private-seller stock, not specialist auction houses. AutoTrader is also
-the only mainstream aggregator confirmed actually scrapeable (Car & Classic
-and Cazoo are both behind bot-challenge walls; eBay 403s; Copart UK is
-behind an Imperva/hCaptcha wall too).
+"""AutoTrader UK — the mainstream national marketplace: ordinary dealer
+and private-seller stock, not specialist auction houses. AutoTrader is
+also the only mainstream aggregator confirmed actually scrapeable (Car &
+Classic and Cazoo are both behind bot-challenge walls; eBay 403s; Copart
+UK is behind an Imperva/hCaptcha wall too).
 
 Search results are rendered client-side (no data in the initial HTML), so
 this uses Playwright instead of plain httpx — the one scraper in this
@@ -14,8 +12,7 @@ change on every AutoTrader deploy, so those are avoided entirely.
 
 Nationwide search: a fixed central postcode with a 1500-mile radius (more
 than the UK's longest possible span), so results aren't biased toward one
-region. Confirmed live: 433 UK results for "Mercedes-Benz SL" alone (every
-SL trim/year — the make+model year/badge gate narrows this down).
+region.
 """
 import asyncio
 import logging
@@ -38,13 +35,16 @@ SEARCH_RADIUS_MILES = 1500
 MAX_PAGES = 5
 
 # (make, model) pairs as AutoTrader's own search taxonomy spells them.
-# "SL" covers every SL-Class generation and trim (SL55, SL63, SL500,
-# SL400, etc.) — confirmed live via car-search?make=Mercedes-Benz&model=SL
-# (433 results, titles include e.g. "3.7 SL350 2dr"). extract_make_model()'s
-# "SL"+"400"+year gate narrows it down to the single tracked R231
-# (2015 onwards) SL400 hunt after fetching.
+# One entry per tracked Aston generation (DB7/DB9/Vantage/DBS are separate
+# "model" values in AutoTrader's own taxonomy, unlike the old single SL
+# query that covered every SL trim) — extract_make_model()'s year gate
+# still does the fine-grained disambiguation after fetching (e.g. "Vantage"
+# spans the modern V8 Vantage and the newer V12/all-new Vantage).
 SEARCHES = [
-    ("Mercedes-Benz", "SL"),
+    ("Aston Martin", "DB7"),
+    ("Aston Martin", "DB9"),
+    ("Aston Martin", "Vantage"),
+    ("Aston Martin", "DBS"),
 ]
 
 

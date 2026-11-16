@@ -4,39 +4,21 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-One hunt currently tracked: Mercedes-Benz SL400 (R231 generation), 2015
-onwards, open-ended — no upper year bound, per explicit request, so a
-later facelift year doesn't silently age out of the hunt the way a closed
-range would. SL350 (the pre-facelift badge for the same 3.0L-era V6 slot)
-was tracked alongside SL400 earlier for a direct cross-shop comparison,
-but was dropped per explicit follow-up once the user settled on SL400 as
-the only model of interest.
+Four hunts currently tracked, all Aston Martin "modern classics" (per
+explicit request, replacing the earlier Mercedes-Benz SL400 hunt and its
+now-cleared vehicle/listing data): DB7 (1994-2003), DB9 (2004-2016), V8
+Vantage (2005-2017), and DBS (2007-2012). These are closed ranges (unlike
+the old SL400's open-ended one) since each is a genuinely distinct Aston
+generation and the year gate is also doing real disambiguation work here —
+see the model patterns below.
 
-Under £25k (raised twice from £18k once live AutoTrader/Gumtree/
-PistonHeads data showed every real SL400 currently for sale asks
-£19k-£35k — the original £18k ceiling was below the entire live market,
-not just the cheap end of it) and 80k miles. These two are the only
-remaining hard discovery-time gates. Mainstream depreciation-curve car:
-plentiful supply, no scarcity premium, bought/sold through ordinary
-classifieds rather than specialist auction houses — hence the mainstream-
-classifieds-only source list in seed.py, not niche/enthusiast sources.
-
-Everything else the user cares about is a scoring bonus rather than a
-gate, via DISCOVERY_BONUS_TEXT_GROUPS (text-matched) and
-DISCOVERY_SELLER_TYPE_BONUS (structured seller_type field) below — both
-only add to a matching listing's score via scoring.py's compute_score,
-never exclude a listing that doesn't match. All four (exterior colour,
-interior colour, private seller, Harman Kardon/AIRSCARF) were hard-
-required at first; each moved here in turn, per explicit request, once
-it was shown to be excluding essentially all real supply on its own — a
-live AutoTrader sweep found every current SL400 for sale (10/10) is
-trade stock, and separately that only one real candidate (out of 10) had
-a confirmed dark exterior (the colour preference in force at the time).
-The colour preference itself later flipped to white exterior over dark
-interior (originally dark-over-light), per explicit correction — white
-exterior, dark interior, and private seller each get 20pts;
-Harman Kardon/AIRSCARF get 5pts each, since they matter far less to the
-user than the other three.
+No hard discovery-time gates (price, mileage, seller type, text) and no
+scoring bonuses for any of the four yet — no budget or feature preference
+has been stated for this hunt, unlike the old SL400 one, so none should be
+invented. Undervaluation is left entirely to scoring.py's benchmark-vs-
+asking-price comparison. Add entries to the dicts below once real
+preferences emerge, following the same per-(make, model-label) shape used
+throughout this module.
 """
 import re
 
@@ -45,36 +27,26 @@ import re
 # accurate fair-value baseline across the whole market, not just what the
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
-DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {
-    ("Mercedes-Benz", "SL400"): 25_000,
-}
+# Empty for all four Aston hunts — no budget stated yet.
+DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {}
 
 # Per-(make, model-label) discovery mileage ceilings, same shape/rationale
 # as the price ceilings above. Omit a vehicle here for no ceiling.
-DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {
-    ("Mercedes-Benz", "SL400"): 80_000,
-}
+DISCOVERY_MILEAGE_CEILINGS_MILES: dict[tuple[str, str], float] = {}
 
 # Per-(make, model-label) required seller type for discovery sources —
-# "private" or "trade". Like the ceilings above, this gives a listing the
-# benefit of the doubt when the source couldn't determine seller type at
-# all (None) rather than excluding it; it only excludes a listing whose
-# seller type is positively known and doesn't match. Empty for SL400 —
-# "private sales only" was hard-required at first, but a live AutoTrader
-# sweep found every current SL400 for sale (10/10) is trade stock, so per
-# explicit request it moved to DISCOVERY_SELLER_TYPE_BONUS below instead:
-# same preference, but scored rather than excluded.
+# "private" or "trade". A listing whose source couldn't determine seller
+# type at all (None) always gets the benefit of the doubt; this only
+# excludes a listing whose seller type is positively known and doesn't
+# match. Empty — no preference stated.
 DISCOVERY_SELLER_TYPE_REQUIRED: dict[tuple[str, str], str] = {}
 
 # Per-(make, model-label) preferred seller type: (label, seller_type,
 # points) — a listing whose structured seller_type field matches gets
 # `points` added to its score the same way a DISCOVERY_BONUS_TEXT_GROUPS
-# match does (see scoring.py's compute_score), but unlike those this
-# checks RawListing.seller_type directly rather than scanning text, since
-# seller type is a structured field on every source, not free text.
-DISCOVERY_SELLER_TYPE_BONUS: dict[tuple[str, str], tuple[str, str, float]] = {
-    ("Mercedes-Benz", "SL400"): ("Private seller", "private", 20.0),
-}
+# match does (see scoring.py's compute_score). Empty — no preference
+# stated.
+DISCOVERY_SELLER_TYPE_BONUS: dict[tuple[str, str], tuple[str, str, float]] = {}
 
 
 def discovery_price_ceiling(make: str | None, model: str | None) -> float | None:
@@ -108,36 +80,6 @@ def seller_type_bonus_feature(make: str | None, model: str | None, seller_type: 
     return (label, points) if seller_type == preferred_type else None
 
 
-# Dark-interior phrasing is generated from colour x furnishing-noun
-# combinations rather than hand-listing every phrase, since sellers
-# describe the same interior as "black leather", "black interior" or
-# "black upholstery" interchangeably.
-_DARK_INTERIOR_COLOURS = [
-    "black", "espresso", "dark brown", "graphite", "charcoal", "anthracite",
-]
-_INTERIOR_NOUNS = ["interior", "leather", "upholstery", "trim"]
-
-# Words that, found immediately after a colour synonym, mean that
-# occurrence is describing the interior trim ("white leather interior")
-# rather than the exterior paint — confirmed live via a real AutoTrader ad
-# ("FULL BLACK AND IVORY PIPED LEATHER INTERIOR", back when the preferred
-# exterior colour was dark rather than white) on a car whose exterior
-# didn't actually match, which the exterior-colour match below was
-# wrongly treating as a hit before this exclusion existed. Still needed
-# now the preference is flipped (white exterior over dark interior) —
-# same risk, e.g. "white leather interior" shouldn't count as a white
-# exterior mention.
-_INTERIOR_CONTEXT_WORDS = ["interior", "leather", "upholstery", "trim", "seat", "piped", "stitch"]
-
-# No hard text requirements for SL400 — dark exterior was the last one
-# standing, but moved to DISCOVERY_BONUS_TEXT_GROUPS below per explicit
-# request ("colours are points not hard blockers"), alongside light
-# interior, which made the same move earlier. Omit a vehicle here for no
-# text requirement; the shape (list of (synonyms, exclude_near) tuples,
-# all required) still supports a future hunt that needs a genuine hard
-# gate.
-DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list[str]]]] = {}
-
 # Desirable-but-not-gating features — each (label, synonyms, points,
 # exclude_near) is text-matched (title + description, where fetched — see
 # each scraper's module docstring for what text it actually captures), but
@@ -146,29 +88,12 @@ DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list
 # group). label is the human-readable name shown in a listing's score
 # explanation when matched. exclude_near works the same as in
 # meets_required_text — a synonym occurrence doesn't count if an
-# exclude_near word follows before the next " with " (guards against
-# "white leather interior" counting as a white EXTERIOR mention; see
-# _synonym_matches_outside_context). None of these are gates any more:
-# interior colour and exterior colour were both hard-required at first,
-# then moved here in turn, each per explicit request once it was shown to
-# be excluding essentially all real supply on its own. The colour
-# preference itself flipped too (white exterior over dark interior,
-# rather than the original dark-over-light) per explicit correction.
-_SL_BONUS_TEXT_GROUPS: list[tuple[str, list[str], float, list[str]]] = [
-    (
-        "White exterior",
-        ["white", "polar white", "diamond white", "alpine white", "arctic white", "designo white", "ice white"],
-        20.0,
-        _INTERIOR_CONTEXT_WORDS,
-    ),
-    ("Dark interior", [f"{colour} {noun}" for colour in _DARK_INTERIOR_COLOURS for noun in _INTERIOR_NOUNS], 20.0, []),
-    ("Harman Kardon audio", ["harman kardon", "harman/kardon", "harman-kardon"], 5.0, []),
-    ("AIRSCARF", ["airscarf", "air scarf"], 5.0, []),
-]
+# exclude_near word follows before the next " with " (see
+# _synonym_matches_outside_context). Empty for all four Aston hunts — no
+# feature preference stated yet.
+DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list[str]]]] = {}
 
-DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str], float, list[str]]]] = {
-    ("Mercedes-Benz", "SL400"): _SL_BONUS_TEXT_GROUPS,
-}
+DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str], float, list[str]]]] = {}
 
 
 def matched_bonus_features(make: str | None, model: str | None, *texts: str | None) -> list[tuple[str, float]]:
@@ -196,13 +121,9 @@ def discovery_required_text_groups(make: str | None, model: str | None) -> list[
 
 def _synonym_matches_outside_context(combined: str, synonym: str, exclude_near: list[str]) -> bool:
     """True if `synonym` occurs in `combined` at least once without one of
-    exclude_near appearing before the next " with " — confirmed-live
-    AutoTrader phrasing distinguishes "black AND IVORY PIPED LEATHER
-    INTERIOR" (an interior colour, no "with" before "leather"/"interior" —
-    doesn't count) from "Finished in Black WITH Black Interior" (a real
-    exterior colour — "with" appears before the later "interior" mention,
-    so it counts, even though the ad goes on to separately describe a
-    black interior too)."""
+    exclude_near appearing before the next " with " — guards against e.g.
+    "white leather interior" counting as a white EXTERIOR mention when a
+    future bonus/required text group cares about exterior colour."""
     window = 40
     start = 0
     while True:
@@ -229,23 +150,30 @@ def meets_required_text(make: str | None, model: str | None, *texts: str | None)
 
 # Order matters: more specific keys must come before substrings they contain.
 MAKE_MAP: dict[str, str] = {
-    "mercedes-benz": "Mercedes-Benz",
-    "mercedes benz": "Mercedes-Benz",
-    "mercedes": "Mercedes-Benz",
+    "aston martin": "Aston Martin",
+    "aston-martin": "Aston Martin",
+    "aston": "Aston Martin",
 }
 
-# "SL" and "400" together, either side of optional whitespace/hyphen.
-# Word-bounded on both ends so it doesn't match "SL 4000" or a stray "400"
-# elsewhere in the title, and doesn't match other SL derivatives (SL55,
-# SL63, SL500, SL350). Year gate (below) does the real generation
-# disambiguation.
-MERCEDES_SL400_RE = re.compile(r"\bsl\s*-?\s*400\b")
-
 # (regex, label, year_start, year_end) — checked in order; year_end=None
-# means open-ended (no upper bound). year gate uses the same "benefit of
-# the doubt when year unknown" rule as every other hunt here.
-MERCEDES_SL_MODELS: list[tuple[re.Pattern, str, int, int | None]] = [
-    (MERCEDES_SL400_RE, "SL400", 2015, None),
+# means open-ended. Year gate uses the same "benefit of the doubt when
+# year unknown" rule as every other hunt here, and also does real
+# generation disambiguation for names Aston reused across eras:
+# - "Vantage" alone named the original V8 Vantage (1977-2000), the modern
+#   V8 Vantage (2005-2017, tracked here), the V12 Vantage (2009-2018, not
+#   tracked — excluded via the negative lookbehind below so a V12 Vantage
+#   listing doesn't get mislabelled), and the all-new Vantage (2018-).
+#   The year gate alone would let the 2018+ car through on an untitled
+#   year match, so both the lookbehind and the year gate matter here.
+# - "DBS" named the 1967-1972 classic and the 2018+ Superleggera as well
+#   as the 2007-2012 V12 car tracked here — the year gate is the only
+#   thing distinguishing them.
+ASTON_MARTIN_VANTAGE_RE = re.compile(r"(?<!v12 )(?<!v12-)\bvantage\b")
+ASTON_MARTIN_MODELS: list[tuple[re.Pattern, str, int, int | None]] = [
+    (re.compile(r"\bdb7\b"), "DB7", 1994, 2003),
+    (re.compile(r"\bdb9\b"), "DB9", 2004, 2016),
+    (ASTON_MARTIN_VANTAGE_RE, "V8 Vantage", 2005, 2017),
+    (re.compile(r"\bdbs\b"), "DBS", 2007, 2012),
 ]
 
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
@@ -253,12 +181,12 @@ MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
 
 def extract_make_model(title: str | None, year: int | None = None) -> tuple[str | None, str | None]:
     """`year`: pass the listing's own structured year field when the caller
-    has one. Several sources (AutoTrader confirmed live) never embed a year
-    in the title text at all — it only lives in a separate field — so
-    relying on regex-scraping the title alone silently defeats every
-    year-gate below via its "benefit of the doubt" fallback, letting
-    completely wrong model years through. Falls back to scanning the title
-    only when no structured year is supplied.
+    has one. Several sources (AutoTrader confirmed live, for the earlier
+    SL400 hunt) never embed a year in the title text at all — it only
+    lives in a separate field — so relying on regex-scraping the title
+    alone silently defeats every year-gate below via its "benefit of the
+    doubt" fallback, letting completely wrong model years through. Falls
+    back to scanning the title only when no structured year is supplied.
     """
     if not title:
         return None, None
@@ -276,8 +204,8 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
         if re.search(pattern, lowered):
             return make, label
 
-    if make == "Mercedes-Benz":
-        for pattern, label, year_start, year_end in MERCEDES_SL_MODELS:
+    if make == "Aston Martin":
+        for pattern, label, year_start, year_end in ASTON_MARTIN_MODELS:
             if pattern.search(lowered):
                 if year is None:
                     title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
@@ -295,11 +223,14 @@ def is_target_vehicle(title: str | None, year: int | None = None) -> bool:
 
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
-    "mercedes-benz+sl400",
+    "aston+martin+db7",
+    "aston+martin+db9",
+    "aston+martin+v8+vantage",
+    "aston+martin+dbs",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
 # relying on is_target_vehicle() as the real filter after fetching.
 SEARCH_MAKES_ONLY = [
-    "Mercedes-Benz",
+    "Aston Martin",
 ]
