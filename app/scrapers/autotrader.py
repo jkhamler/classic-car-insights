@@ -32,15 +32,26 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://www.autotrader.co.uk"
 SEARCH_POSTCODE = "SW1A1AA"
 SEARCH_RADIUS_MILES = 1500
-MAX_PAGES = 5
+MAX_PAGES = 8
 
 # (make, model) pairs as AutoTrader's own search taxonomy spells them.
 # "S Class" covers every S-Class generation/badge (S500, S63 AMG, W222
-# saloon, etc.) — extract_make_model()'s "S500"+"coupe" text match narrows
-# it down to the single tracked C217 S500 Coupe hunt after fetching.
+# saloon, etc.) — extract_make_model()'s "S500"+exclusion-based body-style
+# check narrows it down to the C217 S500 Coupe hunt after fetching, but
+# that alone isn't enough: an unfiltered "S Class" search is ~700+ results,
+# and MAX_PAGES only ever samples a handful of them in whatever order
+# AutoTrader defaults to — confirmed live, a genuine (and the cheapest
+# found) S500 Coupe was missed entirely this way. AutoTrader does support
+# a body-type filter (BODY_TYPE below), which AutoTrader's own site
+# applies as "&body-type=Coupe" — confirmed live this drops the S-Class
+# result count from 712 to 55, putting real S500 Coupes on page one
+# instead of buried past MAX_PAGES. model="S500" alone (no body-type
+# filter) isn't a usable narrower substitute — confirmed live it returns 0
+# results, since AutoTrader's own taxonomy doesn't split S-Class by badge.
 SEARCHES = [
     ("Mercedes-Benz", "S Class"),
 ]
+BODY_TYPE = "Coupe"
 
 
 @register_scraper("autotrader")
@@ -66,7 +77,8 @@ class AutoTraderScraper(BaseScraper):
                     for page_num in range(1, MAX_PAGES + 1):
                         url = (
                             f"{BASE_URL}/car-search?postcode={SEARCH_POSTCODE}"
-                            f"&make={make.replace(' ', '%20')}&model={model}"
+                            f"&make={make.replace(' ', '%20')}&model={model.replace(' ', '%20')}"
+                            f"&body-type={BODY_TYPE}"
                             f"&radius={SEARCH_RADIUS_MILES}&page={page_num}"
                         )
                         # A mid-page returning 0 cards while later pages
