@@ -8,13 +8,25 @@ One hunt currently tracked, per explicit request (replacing the earlier
 Aston Martin modern-classics hunt and its cleared vehicle/listing data):
 Mercedes-Benz S500 Coupe (C217 generation), 2015 onwards — open-ended, no
 upper year bound, mirroring how the SL400 hunt before it was scoped.
+Coupe only, no saloons, per explicit follow-up.
 
 The C217 generation's "S500" badge is reused elsewhere — most notably the
-contemporary W222 S-Class SALOON also carries an "S500" badge — so title
-matching requires both "S500" (or "S 500") AND "coupe" to appear, not just
-the badge alone. The badge itself was also retired at the C217 facelift
-(renamed S560 from ~2018), so requiring "S500" naturally scopes this to
-the pre-facelift C217 cars rather than needing a closed year range.
+contemporary W222 S-Class SALOON also carries an "S500" badge (as does the
+S-Class Cabriolet) — so body style needs disambiguating. Confirmed live on
+PistonHeads: real S500 Coupe listing titles never actually contain the
+word "coupe" (e.g. "S-Class 4.7 S500 V8 AMG Line (Premium) G-Tronic Euro 6
+(s/s) 2dr") — body style lives in a separate structured field PistonHeads
+shows beside the title, not in the title text itself, so requiring the
+literal word "coupe" silently filtered out every real match. The saloon
+variant instead reliably spells out "S500L"/"S500 L" (long-wheelbase
+badge) plus "Saloon"/"Limousine"/"4dr" in its title, and the Cabriolet
+variant usually (not always — this is a known gap) spells out
+"Cabriolet"/"Convertible". So this matches on exclusion instead: accept
+"S500" unless one of those saloon/cabriolet markers is present, rather
+than requiring a positive "coupe" marker that mostly isn't there. The
+badge itself was also retired at the C217 facelift (renamed S560 from
+~2018), so requiring "S500" naturally scopes this to the pre-facelift
+C217 cars rather than needing a closed year range.
 
 No hard discovery-time gates (price, mileage, seller type, text) and no
 scoring bonuses yet — no budget or feature preference has been stated for
@@ -159,16 +171,23 @@ MAKE_MAP: dict[str, str] = {
 }
 
 # "S500" (or "S 500") word-bounded so it doesn't match "S5000" or a stray
-# "500" elsewhere in the title. "Coupe"/"coupé" must also appear — the
-# badge alone is ambiguous with the W222 S-Class SALOON, which was sold
-# alongside it under the same "S500" name. Year gate (open-ended from
-# 2015) uses the same "benefit of the doubt when year unknown" rule as
-# every other hunt here; it's not load-bearing for generation
-# disambiguation the way it was for SL400/Vantage/DBS, since the "S500"
-# badge itself was retired at the C217 facelift (renamed S560), but it's
-# kept for consistency and to exclude any pre-2015 badge reuse.
+# "500" elsewhere in the title. Note this naturally does NOT match
+# "S500L"/"S500Le" (no word boundary between the digits and the attached
+# "L" — \b500\b requires a non-word character right after "500", and "L"
+# is a word character) — that's a happy accident, not load-bearing, since
+# EXCLUDE_TERMS below also catches the space-separated "S500 L" form via
+# "saloon"/"limousine"/"4dr". Year gate (open-ended from 2015) uses the
+# same "benefit of the doubt when year unknown" rule as every other hunt
+# here; it's not load-bearing for generation disambiguation the way it was
+# for SL400/Vantage/DBS, since the "S500" badge itself was retired at the
+# C217 facelift (renamed S560), but it's kept for consistency and to
+# exclude any pre-2015 badge reuse.
 MERCEDES_S500_RE = re.compile(r"\bs\s?500\b")
-MERCEDES_COUPE_RE = re.compile(r"\bcoup[eé]\b")
+
+# Any of these present means "not a Coupe" — see the module docstring for
+# why this is exclusion-based rather than requiring a positive "coupe"
+# marker (which real listing titles mostly don't contain).
+MERCEDES_NOT_COUPE_TERMS = ["saloon", "limousine", "4dr", "cabriolet", "convertible", "drophead"]
 
 # (regex, label, year_start, year_end) — checked in order; year_end=None
 # means open-ended (no upper bound).
@@ -205,7 +224,7 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
             return make, label
 
     if make == "Mercedes-Benz":
-        if not MERCEDES_COUPE_RE.search(lowered):
+        if any(term in lowered for term in MERCEDES_NOT_COUPE_TERMS):
             return make, None
         for pattern, label, year_start, year_end in MERCEDES_S_CLASS_MODELS:
             if pattern.search(lowered):
