@@ -35,16 +35,11 @@ SEARCH_RADIUS_MILES = 1500
 MAX_PAGES = 5
 
 # (make, model) pairs as AutoTrader's own search taxonomy spells them.
-# One entry per tracked Aston generation (DB7/DB9/Vantage/DBS are separate
-# "model" values in AutoTrader's own taxonomy, unlike the old single SL
-# query that covered every SL trim) — extract_make_model()'s year gate
-# still does the fine-grained disambiguation after fetching (e.g. "Vantage"
-# spans the modern V8 Vantage and the newer V12/all-new Vantage).
+# "S Class" covers every S-Class generation/badge (S500, S63 AMG, W222
+# saloon, etc.) — extract_make_model()'s "S500"+"coupe" text match narrows
+# it down to the single tracked C217 S500 Coupe hunt after fetching.
 SEARCHES = [
-    ("Aston Martin", "DB7"),
-    ("Aston Martin", "DB9"),
-    ("Aston Martin", "Vantage"),
-    ("Aston Martin", "DBS"),
+    ("Mercedes-Benz", "S Class"),
 ]
 
 

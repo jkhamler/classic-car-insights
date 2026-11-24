@@ -33,22 +33,6 @@ def setup_scheduler():
         run_scraper, IntervalTrigger(hours=24),
         args=["autotrader"], id="scrape_autotrader",
     )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["amoc"], id="scrape_amoc",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["nicholas_mee"], id="scrape_nicholas_mee",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["collecting_cars"], id="scrape_collecting_cars",
-    )
-    scheduler.add_job(
-        run_scraper, IntervalTrigger(hours=24),
-        args=["bring_a_trailer"], id="scrape_bring_a_trailer",
-    )
     # Nightly re-scoring at 3 AM
     scheduler.add_job(
         run_scoring, CronTrigger(hour=3), id="nightly_rescore",

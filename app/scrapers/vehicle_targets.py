@@ -4,21 +4,24 @@ Used by every scraper to build search terms and by BaseScraper.run() to
 discard anything that isn't one of these — this is the "tighten to specific
 models" filter, applied uniformly regardless of source.
 
-Four hunts currently tracked, all Aston Martin "modern classics" (per
-explicit request, replacing the earlier Mercedes-Benz SL400 hunt and its
-now-cleared vehicle/listing data): DB7 (1994-2003), DB9 (2004-2016), V8
-Vantage (2005-2017), and DBS (2007-2012). These are closed ranges (unlike
-the old SL400's open-ended one) since each is a genuinely distinct Aston
-generation and the year gate is also doing real disambiguation work here —
-see the model patterns below.
+One hunt currently tracked, per explicit request (replacing the earlier
+Aston Martin modern-classics hunt and its cleared vehicle/listing data):
+Mercedes-Benz S500 Coupe (C217 generation), 2015 onwards — open-ended, no
+upper year bound, mirroring how the SL400 hunt before it was scoped.
+
+The C217 generation's "S500" badge is reused elsewhere — most notably the
+contemporary W222 S-Class SALOON also carries an "S500" badge — so title
+matching requires both "S500" (or "S 500") AND "coupe" to appear, not just
+the badge alone. The badge itself was also retired at the C217 facelift
+(renamed S560 from ~2018), so requiring "S500" naturally scopes this to
+the pre-facelift C217 cars rather than needing a closed year range.
 
 No hard discovery-time gates (price, mileage, seller type, text) and no
-scoring bonuses for any of the four yet — no budget or feature preference
-has been stated for this hunt, unlike the old SL400 one, so none should be
-invented. Undervaluation is left entirely to scoring.py's benchmark-vs-
-asking-price comparison. Add entries to the dicts below once real
-preferences emerge, following the same per-(make, model-label) shape used
-throughout this module.
+scoring bonuses yet — no budget or feature preference has been stated for
+this hunt, so none should be invented. Undervaluation is left entirely to
+scoring.py's benchmark-vs-asking-price comparison. Add entries to the
+dicts below once real preferences emerge, following the same per-(make,
+model-label) shape used throughout this module.
 """
 import re
 
@@ -27,7 +30,7 @@ import re
 # accurate fair-value baseline across the whole market, not just what the
 # buyer wants to see. Keyed by the exact (make, model) label pair
 # extract_make_model() returns below. Omit a vehicle here for no ceiling.
-# Empty for all four Aston hunts — no budget stated yet.
+# Empty — no budget stated yet.
 DISCOVERY_PRICE_CEILINGS_GBP: dict[tuple[str, str], float] = {}
 
 # Per-(make, model-label) discovery mileage ceilings, same shape/rationale
@@ -89,8 +92,8 @@ def seller_type_bonus_feature(make: str | None, model: str | None, seller_type: 
 # explanation when matched. exclude_near works the same as in
 # meets_required_text — a synonym occurrence doesn't count if an
 # exclude_near word follows before the next " with " (see
-# _synonym_matches_outside_context). Empty for all four Aston hunts — no
-# feature preference stated yet.
+# _synonym_matches_outside_context). Empty — no feature preference stated
+# yet.
 DISCOVERY_REQUIRED_TEXT_GROUPS: dict[tuple[str, str], list[tuple[list[str], list[str]]]] = {}
 
 DISCOVERY_BONUS_TEXT_GROUPS: dict[tuple[str, str], list[tuple[str, list[str], float, list[str]]]] = {}
@@ -150,30 +153,27 @@ def meets_required_text(make: str | None, model: str | None, *texts: str | None)
 
 # Order matters: more specific keys must come before substrings they contain.
 MAKE_MAP: dict[str, str] = {
-    "aston martin": "Aston Martin",
-    "aston-martin": "Aston Martin",
-    "aston": "Aston Martin",
+    "mercedes-benz": "Mercedes-Benz",
+    "mercedes benz": "Mercedes-Benz",
+    "mercedes": "Mercedes-Benz",
 }
 
+# "S500" (or "S 500") word-bounded so it doesn't match "S5000" or a stray
+# "500" elsewhere in the title. "Coupe"/"coupé" must also appear — the
+# badge alone is ambiguous with the W222 S-Class SALOON, which was sold
+# alongside it under the same "S500" name. Year gate (open-ended from
+# 2015) uses the same "benefit of the doubt when year unknown" rule as
+# every other hunt here; it's not load-bearing for generation
+# disambiguation the way it was for SL400/Vantage/DBS, since the "S500"
+# badge itself was retired at the C217 facelift (renamed S560), but it's
+# kept for consistency and to exclude any pre-2015 badge reuse.
+MERCEDES_S500_RE = re.compile(r"\bs\s?500\b")
+MERCEDES_COUPE_RE = re.compile(r"\bcoup[eé]\b")
+
 # (regex, label, year_start, year_end) — checked in order; year_end=None
-# means open-ended. Year gate uses the same "benefit of the doubt when
-# year unknown" rule as every other hunt here, and also does real
-# generation disambiguation for names Aston reused across eras:
-# - "Vantage" alone named the original V8 Vantage (1977-2000), the modern
-#   V8 Vantage (2005-2017, tracked here), the V12 Vantage (2009-2018, not
-#   tracked — excluded via the negative lookbehind below so a V12 Vantage
-#   listing doesn't get mislabelled), and the all-new Vantage (2018-).
-#   The year gate alone would let the 2018+ car through on an untitled
-#   year match, so both the lookbehind and the year gate matter here.
-# - "DBS" named the 1967-1972 classic and the 2018+ Superleggera as well
-#   as the 2007-2012 V12 car tracked here — the year gate is the only
-#   thing distinguishing them.
-ASTON_MARTIN_VANTAGE_RE = re.compile(r"(?<!v12 )(?<!v12-)\bvantage\b")
-ASTON_MARTIN_MODELS: list[tuple[re.Pattern, str, int, int | None]] = [
-    (re.compile(r"\bdb7\b"), "DB7", 1994, 2003),
-    (re.compile(r"\bdb9\b"), "DB9", 2004, 2016),
-    (ASTON_MARTIN_VANTAGE_RE, "V8 Vantage", 2005, 2017),
-    (re.compile(r"\bdbs\b"), "DBS", 2007, 2012),
+# means open-ended (no upper bound).
+MERCEDES_S_CLASS_MODELS: list[tuple[re.Pattern, str, int, int | None]] = [
+    (MERCEDES_S500_RE, "S500 Coupe", 2015, None),
 ]
 
 MODEL_PATTERNS_BY_MAKE: dict[str, list[tuple[str, str]]] = {}
@@ -204,8 +204,10 @@ def extract_make_model(title: str | None, year: int | None = None) -> tuple[str 
         if re.search(pattern, lowered):
             return make, label
 
-    if make == "Aston Martin":
-        for pattern, label, year_start, year_end in ASTON_MARTIN_MODELS:
+    if make == "Mercedes-Benz":
+        if not MERCEDES_COUPE_RE.search(lowered):
+            return make, None
+        for pattern, label, year_start, year_end in MERCEDES_S_CLASS_MODELS:
             if pattern.search(lowered):
                 if year is None:
                     title_year_match = re.search(r"\b(19[6-9]\d|20[0-2]\d)\b", title)
@@ -223,14 +225,11 @@ def is_target_vehicle(title: str | None, year: int | None = None) -> bool:
 
 # "make+model" style terms for scrapers that search via a query string.
 SEARCH_TERMS = [
-    "aston+martin+db7",
-    "aston+martin+db9",
-    "aston+martin+v8+vantage",
-    "aston+martin+dbs",
+    "mercedes-benz+s500+coupe",
 ]
 
 # Plain make names for scrapers that can only filter by make (or not at all),
 # relying on is_target_vehicle() as the real filter after fetching.
 SEARCH_MAKES_ONLY = [
-    "Aston Martin",
+    "Mercedes-Benz",
 ]
